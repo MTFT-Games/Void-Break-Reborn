@@ -104,9 +104,12 @@ struct Drag {
     rotational: f32,
 }
 
-fn apply_drag(mut query: Query<(&mut Velocity, &Drag)>) {
+fn apply_drag(mut query: Query<(&mut Velocity, &Drag)>, time: Res<Time>) {
     for (mut velocity, drag) in query.iter_mut() {
-        velocity.translation_speed *= 1.0 - drag.translational;
-        velocity.rotation_speed *= 1.0 - drag.rotational;
+        // I think this is the right way to delta time here... could be wrong
+        velocity.translation_speed *= 1.0 - drag.translational * time.delta_seconds();
+        velocity.rotation_speed *= 1.0 - drag.rotational * time.delta_seconds();
+        
+        // TODO: zero it past a threshold
     }
 }
