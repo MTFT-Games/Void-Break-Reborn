@@ -21,8 +21,25 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         Camera2dBundle::default(),
         RenderLayers::from_layers(&[0, 1]),
     ));
+    commands.spawn(PlayerBundle {
+        sprite_bundle: SpriteBundle {
+            // TODO: Might want to set sprite size
+            texture: assets.load("basic_player_100.png"),
+            ..Default::default()
+        },
+        player: Player,
+    });
 }
 
 // Not really needed for anything yet but might be useful later
 #[derive(Component)]
 struct Background;
+
+#[derive(Bundle)]
+struct PlayerBundle {
+    sprite_bundle: SpriteBundle,
+    player: Player,
+}
+
+#[derive(Component)]
+struct Player;
