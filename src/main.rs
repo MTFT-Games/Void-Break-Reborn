@@ -33,6 +33,10 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         },
         player: Player,
         velocity: Velocity::default(),
+        drag: Drag {
+            translational: 0.1,
+            rotational: 0.1,
+        },
     });
 }
 
@@ -45,6 +49,7 @@ struct PlayerBundle {
     sprite_bundle: SpriteBundle,
     player: Player,
     velocity: Velocity,
+    drag: Drag,
 }
 
 #[derive(Component)]
