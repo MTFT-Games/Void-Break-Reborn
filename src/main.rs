@@ -34,8 +34,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         player: Player,
         velocity: Velocity::default(),
         drag: Drag {
-            translational: 0.1,
-            rotational: 0.1,
+            translational: 0.5,
+            rotational: 2.0,
         },
     });
 }
@@ -76,10 +76,10 @@ fn player_controller(
 
     use std::f32::consts::PI;
     if keyboard.pressed(KeyCode::A) {
-        player_velocity.rotation_speed += PI * time.delta_seconds();
+        player_velocity.rotation_speed += 2.0 * PI * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::D) {
-        player_velocity.rotation_speed -= PI * time.delta_seconds();
+        player_velocity.rotation_speed -= 2.0 * PI * time.delta_seconds();
     }
 }
 
@@ -98,7 +98,7 @@ fn movement(mut query: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
 }
 
 #[derive(Component)]
-/// 0-1, more drag slows faster
+/// 0-1 or more due to delta time, more drag slows faster
 struct Drag {
     translational: f32,
     rotational: f32,
@@ -109,7 +109,7 @@ fn apply_drag(mut query: Query<(&mut Velocity, &Drag)>, time: Res<Time>) {
         // I think this is the right way to delta time here... could be wrong
         velocity.translation_speed *= 1.0 - drag.translational * time.delta_seconds();
         velocity.rotation_speed *= 1.0 - drag.rotational * time.delta_seconds();
-        
-        // TODO: zero it past a threshold
+
+        // TODO: zero it past a threshold. or maybe not...
     }
 }
