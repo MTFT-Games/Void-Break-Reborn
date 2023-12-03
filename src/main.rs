@@ -93,9 +93,15 @@ fn movement(mut query: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
 }
 
 #[derive(Component)]
-
+/// 0-1, more drag slows faster
 struct Drag {
-    coefficient: f32,
+    translational: f32,
+    rotational: f32,
 }
 
-fn apply_drag(mut query: Query<(&mut Velocity, &Drag)>) {}
+fn apply_drag(mut query: Query<(&mut Velocity, &Drag)>) {
+    for (mut velocity, drag) in query.iter_mut() {
+        velocity.translation_speed *= 1.0 - drag.translational;
+        velocity.rotation_speed *= 1.0 - drag.rotational;
+    }
+}
