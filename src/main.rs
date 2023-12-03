@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::render::view::RenderLayers;
 
 fn main() {
     App::new()
@@ -14,6 +15,11 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ..Default::default()
         },
         Background,
+        RenderLayers::layer(1),
+    ));
+    commands.spawn((
+        Camera2dBundle::default(),
+        RenderLayers::from_layers(&[0, 1]),
     ));
 }
 
