@@ -8,12 +8,14 @@ fn main() {
         .add_systems(Update, player_controller)
         .add_systems(Update, movement)
         .add_systems(Update, apply_drag)
+        .add_systems(Update, camera_controller)
         .run();
 }
 
 /// Spawn the core components needed for basic game function: Background, Player, and Camera
 fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
-    commands.spawn(( // Background
+    commands.spawn((
+        // Background
         SpriteBundle {
             texture: assets.load("purple_nebula_4_repeated.png"),
             ..Default::default()
@@ -21,7 +23,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         Background,
         RenderLayers::layer(1),
     ));
-    commands.spawn(( // Main camera
+    commands.spawn((
+        // Main camera
         Camera2dBundle::default(),
         RenderLayers::from_layers(&[0, 1]),
         MainCamera,
@@ -117,3 +120,15 @@ fn apply_drag(mut query: Query<(&mut Velocity, &Drag)>, time: Res<Time>) {
 
 #[derive(Component)]
 struct MainCamera;
+
+fn camera_controller(
+    player_transform: Query<&Transform, With<Player>>,
+    // This one must explicitly exclude player or Bevy will scream even though no MainCamera has a Player.
+    mut camera_transform: Query<&mut Transform, (With<MainCamera>, Without<Player>)>,
+) {
+    // Again, if theres more than one player, we have a big issue. TODO: If multiplayer later this will be an issue...
+    let player_transform = player_transform.single();
+    let mut camera_transform = camera_transform.single_mut();
+
+    camera_transform.translation = player_transform.translation;
+}
