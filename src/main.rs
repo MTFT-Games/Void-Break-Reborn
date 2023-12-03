@@ -86,9 +86,9 @@ struct Velocity {
     rotation_speed: f32,
 }
 
-fn movement(mut query: Query<(&mut Transform, &Velocity)>) {
+fn movement(mut query: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
     for (mut transform, velocity) in query.iter_mut() {
-        transform.translation += velocity.translation_speed;
-        transform.rotate_local_z(velocity.rotation_speed);
+        transform.translation += velocity.translation_speed * time.delta_seconds();
+        transform.rotate_local_z(velocity.rotation_speed * time.delta_seconds());
     }
 }
