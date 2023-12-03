@@ -9,6 +9,7 @@ fn main() {
         .run();
 }
 
+/// Spawn the core components needed for basic game function: Background, Player, and Camera
 fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
     commands.spawn((
         SpriteBundle {
@@ -36,6 +37,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
 #[derive(Component)]
 struct Background;
 
+
 #[derive(Bundle)]
 struct PlayerBundle {
     sprite_bundle: SpriteBundle,
@@ -45,12 +47,15 @@ struct PlayerBundle {
 #[derive(Component)]
 struct Player;
 
+/// Core controls for the player
+// Todo: Make it all delta time based
 fn player_controller(
     mut transform: Query<&mut Transform, With<Player>>,
     keyboard: Res<Input<KeyCode>>,
 ) {
+    // If there are ever more than one player, something has gone very wrong
     let mut player_transform = transform.single_mut();
-    // Todo: Make it all delta time based
+
     if keyboard.pressed(KeyCode::W) {
         player_transform.translation += Vec3 {
             x: 0.0,
