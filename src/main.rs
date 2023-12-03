@@ -7,6 +7,7 @@ fn main() {
         .add_systems(Startup, spawn_core)
         .add_systems(Update, player_controller)
         .add_systems(Update, movement)
+        .add_systems(Update, apply_drag)
         .run();
 }
 
@@ -90,3 +91,11 @@ fn movement(mut query: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
         transform.rotate_local_z(velocity.rotation_speed * time.delta_seconds());
     }
 }
+
+#[derive(Component)]
+
+struct Drag {
+    coefficient: f32,
+}
+
+fn apply_drag(mut query: Query<(&mut Velocity, &Drag)>) {}
