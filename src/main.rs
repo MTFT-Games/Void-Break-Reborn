@@ -13,7 +13,7 @@ fn main() {
 
 /// Spawn the core components needed for basic game function: Background, Player, and Camera
 fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
-    commands.spawn((
+    commands.spawn(( // Background
         SpriteBundle {
             texture: assets.load("purple_nebula_4_repeated.png"),
             ..Default::default()
@@ -21,9 +21,10 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         Background,
         RenderLayers::layer(1),
     ));
-    commands.spawn((
+    commands.spawn(( // Main camera
         Camera2dBundle::default(),
         RenderLayers::from_layers(&[0, 1]),
+        MainCamera,
     ));
     commands.spawn(PlayerBundle {
         sprite_bundle: SpriteBundle {
@@ -113,3 +114,6 @@ fn apply_drag(mut query: Query<(&mut Velocity, &Drag)>, time: Res<Time>) {
         // TODO: zero it past a threshold. or maybe not...
     }
 }
+
+#[derive(Component)]
+struct MainCamera;
