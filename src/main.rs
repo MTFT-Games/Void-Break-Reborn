@@ -1,11 +1,14 @@
-use bevy::prelude::*;
+use std::default;
+
 use bevy::render::view::RenderLayers;
+use bevy::{prelude::*, transform};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
         .add_systems(Startup, spawn_core)
         .add_systems(Update, player_controller)
+        .add_systems(Update, movement)
         .run();
 }
 
@@ -30,6 +33,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ..Default::default()
         },
         player: Player,
+        velocity: Velocity::default(),
     });
 }
 
@@ -41,6 +45,7 @@ struct Background;
 struct PlayerBundle {
     sprite_bundle: SpriteBundle,
     player: Player,
+    velocity: Velocity,
 }
 
 #[derive(Component)]
@@ -50,7 +55,8 @@ struct Player;
 // Todo: Make it all delta time based
 fn player_controller(
     mut transform: Query<&mut Transform, With<Player>>,
-    keyboard: Res<Input<KeyCode>>, time: Res<Time>
+    keyboard: Res<Input<KeyCode>>,
+    time: Res<Time>,
 ) {
     // If there are ever more than one player, something has gone very wrong
     let mut player_transform = transform.single_mut();
@@ -70,5 +76,19 @@ fn player_controller(
     }
     if keyboard.pressed(KeyCode::D) {
         player_transform.rotate_local_z(PI * -time.delta_seconds());
+    }
+}
+
+#[derive(Component, Default)]
+struct Velocity {
+    translation_speed: Vec3,
+    /// Note: Positive is clockwise
+    rotation_speed: f32,
+}
+
+fn movement(mut query: Query<(&mut Transform, &Velocity)>) {
+    for (mut transform, velocity) in query.iter_mut() {
+        transform.translation += velocity.translation_speed;
+        transform.rotate_local_z(velocity.rotation_speed);
     }
 }
