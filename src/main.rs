@@ -37,7 +37,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
 #[derive(Component)]
 struct Background;
 
-
 #[derive(Bundle)]
 struct PlayerBundle {
     sprite_bundle: SpriteBundle,
@@ -55,33 +54,21 @@ fn player_controller(
 ) {
     // If there are ever more than one player, something has gone very wrong
     let mut player_transform = transform.single_mut();
+    let forward = player_transform.local_y();
 
     if keyboard.pressed(KeyCode::W) {
-        player_transform.translation += Vec3 {
-            x: 0.0,
-            y: 1.0,
-            z: 0.0,
-        };
+        player_transform.translation += forward;
     }
-    if keyboard.pressed(KeyCode::A) {
-        player_transform.translation += Vec3 {
-            x: -1.0,
-            y: 0.0,
-            z: 0.0,
-        };
-    }
+    // TODO: lock reverse behind an upgrade later
     if keyboard.pressed(KeyCode::S) {
-        player_transform.translation += Vec3 {
-            x: 0.0,
-            y: -1.0,
-            z: 0.0,
-        };
+        player_transform.translation -= forward;
+    }
+
+    use std::f32::consts::PI;
+    if keyboard.pressed(KeyCode::A) {
+        player_transform.rotate_local_z(PI / 30.0);
     }
     if keyboard.pressed(KeyCode::D) {
-        player_transform.translation += Vec3 {
-            x: 1.0,
-            y: 0.0,
-            z: 0.0,
-        };
+        player_transform.rotate_local_z(PI / -30.0);
     }
 }
