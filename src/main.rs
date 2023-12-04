@@ -1,9 +1,13 @@
+use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
+use bevy::diagnostic::LogDiagnosticsPlugin;
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(LogDiagnosticsPlugin::default()) // TODO make this debug only
         .add_systems(Startup, spawn_core)
         .add_systems(Update, player_controller)
         .add_systems(Update, movement)
