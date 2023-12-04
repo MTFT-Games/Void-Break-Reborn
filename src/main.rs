@@ -132,3 +132,6 @@ fn camera_controller(
 
     camera_transform.translation = player_transform.translation;
 }
+
+#[derive(Component)]
+struct Wrappable;
