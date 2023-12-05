@@ -160,3 +160,11 @@ fn wrap(background: Query<&Background>, mut transforms: Query<&mut Transform, Wi
         }
     }
 }
+
+#[derive(Component)]
+struct Asteroid;
+
+#[derive(Component)]
+struct Health {
+    health: f32,
+}
