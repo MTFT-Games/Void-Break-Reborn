@@ -173,3 +173,13 @@ struct Health {
 struct CollisionConfig {
     radius: f32,
 }
+
+#[derive(Bundle)]
+struct AsteroidBundle {
+    collision: CollisionConfig,
+    health: Health,
+    sprite_bundle: SpriteBundle,
+    velocity: Velocity,
+    wrap: Wrappable,
+    asteroid: Asteroid,
+}
