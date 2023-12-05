@@ -1,18 +1,18 @@
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
-use bevy::diagnostic::LogDiagnosticsPlugin;
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
-        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(FrameTimeDiagnosticsPlugin)
         .add_plugins(LogDiagnosticsPlugin::default()) // TODO make this debug only
         .add_systems(Startup, spawn_core)
         .add_systems(Update, player_controller)
         .add_systems(Update, movement)
         .add_systems(Update, apply_drag)
         .add_systems(Update, camera_controller)
+        .add_systems(Update, wrap)
         .run();
 }
 
@@ -24,7 +24,12 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             texture: assets.load("purple_nebula_4_repeated.png"),
             ..Default::default()
         },
-        Background,
+        Background {
+            size: Vec2 {
+                x: 1024.0,
+                y: 1024.0,
+            },
+        },
         RenderLayers::layer(1),
     ));
     commands.spawn((
@@ -45,12 +50,15 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             translational: 0.5,
             rotational: 2.0,
         },
+        wrap: Wrappable,
     });
 }
 
 // Not really needed for anything yet but might be useful later
 #[derive(Component)]
-struct Background;
+struct Background {
+    size: Vec2,
+}
 
 #[derive(Bundle)]
 struct PlayerBundle {
@@ -58,6 +66,7 @@ struct PlayerBundle {
     player: Player,
     velocity: Velocity,
     drag: Drag,
+    wrap: Wrappable,
 }
 
 #[derive(Component)]
@@ -139,3 +148,15 @@ fn camera_controller(
 
 #[derive(Component)]
 struct Wrappable;
+
+fn wrap(background: Query<&Background>, mut transforms: Query<&mut Transform, With<Wrappable>>) {
+    let background = background.single();
+    for mut transform in transforms.iter_mut() {
+        if transform.translation.x.abs() > background.size.x / 2.0 {
+            transform.translation.x *= -1.0;
+        }
+        if transform.translation.y.abs() > background.size.y / 2.0 {
+            transform.translation.y *= -1.0;
+        }
+    }
+}
