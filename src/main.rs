@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
@@ -8,6 +10,7 @@ fn main() {
         .add_plugins(FrameTimeDiagnosticsPlugin)
         .add_plugins(LogDiagnosticsPlugin::default()) // TODO make this debug only
         .add_systems(Startup, spawn_core)
+        .add_systems(Startup, spawn_asteroids)
         .add_systems(Update, player_controller)
         .add_systems(Update, movement)
         .add_systems(Update, apply_drag)
@@ -91,7 +94,6 @@ fn player_controller(
         player_velocity.translation_speed -= forward * 200.0 * time.delta_seconds();
     }
 
-    use std::f32::consts::PI;
     if keyboard.pressed(KeyCode::A) {
         player_velocity.rotation_speed += 2.0 * PI * time.delta_seconds();
     }
@@ -182,4 +184,25 @@ struct AsteroidBundle {
     velocity: Velocity,
     wrap: Wrappable,
     asteroid: Asteroid,
+}
+
+fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
+    commands.spawn(AsteroidBundle {
+        asteroid: Asteroid,
+        wrap: Wrappable,
+        velocity: Velocity {
+            translation_speed: Vec3 {
+                x: 200.0,
+                y: 100.0,
+                z: 0.0,
+            },
+            rotation_speed: PI,
+        },
+        collision: CollisionConfig { radius: 100.0 },
+        health: Health { health: 20.0 },
+        sprite_bundle: SpriteBundle {
+            texture: assets.load("basic_asteroid_100.png"),
+            ..Default::default()
+        },
+    });
 }
