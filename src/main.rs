@@ -152,13 +152,22 @@ fn camera_controller(
 #[derive(Component)]
 struct Wrappable;
 
-fn wrap(background: Query<&Background>, mut transforms: Query<&mut Transform, With<Wrappable>>) {
+fn wrap(
+    background: Query<&Background>,
+    mut query: Query<(&mut Transform, &Velocity), With<Wrappable>>,
+) {
     let background = background.single();
-    for mut transform in transforms.iter_mut() {
-        if transform.translation.x.abs() > background.size.x / 2.0 {
+    for (mut transform, velocity) in query.iter_mut() {
+        if transform.translation.x.abs() > background.size.x / 2.0
+            && transform.translation.x.is_sign_negative()
+                == velocity.translation_speed.x.is_sign_negative()
+        {
             transform.translation.x *= -1.0;
         }
-        if transform.translation.y.abs() > background.size.y / 2.0 {
+        if transform.translation.y.abs() > background.size.y / 2.0
+            && transform.translation.y.is_sign_negative()
+                == velocity.translation_speed.y.is_sign_negative()
+        {
             transform.translation.y *= -1.0;
         }
     }
