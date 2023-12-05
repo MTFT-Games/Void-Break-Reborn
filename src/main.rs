@@ -168,3 +168,8 @@ struct Asteroid;
 struct Health {
     health: f32,
 }
+
+#[derive(Component)]
+struct CollisionConfig {
+    radius: f32,
+}
