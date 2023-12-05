@@ -25,6 +25,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         // Background
         SpriteBundle {
             texture: assets.load("purple_nebula_4_repeated.png"),
+            transform: Transform::from_xyz(0.0, 0.0, -100.0),
             ..Default::default()
         },
         Background {
