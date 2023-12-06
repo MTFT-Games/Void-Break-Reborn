@@ -188,7 +188,7 @@ struct Health {
 }
 
 #[derive(Component)]
-struct CollisionConfig {
+struct CollisionConfig { // This could eb an enum maybe for different types of collision boxes maybe. or contain one along with other info
     radius: f32,
 }
 
@@ -392,7 +392,7 @@ fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<I
 }
 
 #[derive(Component)]
-enum Affiliation {
+enum Affiliation { // should this just be part of collision config?
     Friendly,
     Neutral,
     Hostile,
@@ -402,7 +402,7 @@ enum Affiliation {
 struct Projectile;
 
 #[derive(Component)]
-enum Damage {
+enum Damage { // should this just be part of collision config?
     Basic(f32),
 }
 
