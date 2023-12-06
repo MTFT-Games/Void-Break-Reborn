@@ -394,13 +394,24 @@ enum Affiliation {
 struct Projectile;
 
 #[derive(Component)]
-enum Damage { 
+enum Damage {
     Basic(f32),
 }
 
 #[derive(Component)]
-enum Lifetime { // Is this a good idea to make an enum? we will find out when i try to do stuff with it lol
-    Time(Timer), // This could also be replaced with health and applying damage over time... 
+enum Lifetime {
+    // Is this a good idea to make an enum? we will find out when i try to do stuff with it lol
+    Time(Timer), // This could also be replaced with health and applying damage over time...
     Hits(u32),
     // Should health be under this??? maybe? thats a later problem
+}
+
+#[derive(Bundle)]
+struct ProjectileBundle {
+    affiliation: Affiliation,
+    sprite_bundle: SpriteBundle,
+    velocity: Velocity,
+    marker: Projectile, // TODO: Standardize calling this property marker or the type name
+    damage: Damage,
+    life: Lifetime,
 }
