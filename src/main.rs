@@ -390,3 +390,17 @@ enum Affiliation {
     Hostile,
 }
 
+#[derive(Component)]
+struct Projectile;
+
+#[derive(Component)]
+enum Damage { 
+    Basic(f32),
+}
+
+#[derive(Component)]
+enum Lifetime { // Is this a good idea to make an enum? we will find out when i try to do stuff with it lol
+    Time(Timer), // This could also be replaced with health and applying damage over time... 
+    Hits(u32),
+    // Should health be under this??? maybe? thats a later problem
+}
