@@ -16,6 +16,7 @@ fn main() {
         .add_systems(Update, camera_controller)
         .add_systems(Update, wrap)
         .add_systems(Update, tick_lifetime)
+        .add_systems(Update, cull_bullets)
         .run();
 }
 
@@ -184,7 +185,7 @@ struct Asteroid;
 
 #[derive(Component)]
 struct Health {
-    // Maybe make enum with hits varient
+    // Maybe make enum with hits variant
     health: f32,
 }
 
@@ -420,6 +421,7 @@ struct ProjectileBundle {
     affiliation: Affiliation,
     sprite_bundle: SpriteBundle,
     velocity: Velocity,
+    // TODO: Remove projectile maybe? I don't think I use it...
     marker: Projectile, // TODO: Standardize calling this property marker or the type name
     damage: Damage,
     life: Lifetime,
@@ -429,5 +431,21 @@ struct ProjectileBundle {
 fn tick_lifetime(time: Res<Time>, mut lifetimes: Query<&mut Lifetime>) {
     for mut lifetime in lifetimes.iter_mut() {
         lifetime.time.tick(time.delta());
+    }
+}
+
+#[derive(Component)]
+struct Bullet;
+// Either have bullet and other timed types be in an enum and handle all of their deaths here in a big match
+// Or each projectile type has its own system to handle what happens when it dies
+// or whenever something dies to lifetime it just despawns and if i want things to happen on death
+// use health and constant damage over time... or doo something else special, maybe events can help
+// for now this will work
+// also, is there any situation where a lifetime ticking and checking to despawn need to be separate? or should all controllers/death handlers also do the ticking...?
+fn cull_bullets(query: Query<(Entity, &Lifetime), With<Bullet>>, mut commands: Commands) {
+    for (entity, lifetime) in query.iter() {
+        if lifetime.time.finished() {
+            commands.entity(entity).despawn();
+        }
     }
 }
