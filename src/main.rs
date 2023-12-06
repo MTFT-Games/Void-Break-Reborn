@@ -382,3 +382,11 @@ fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<I
         };
     }
 }
+
+#[derive(Component)]
+enum Affiliation {
+    Friendly,
+    Neutral,
+    Hostile,
+}
+
