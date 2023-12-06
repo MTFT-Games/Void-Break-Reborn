@@ -55,6 +55,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             rotational: 2.0,
         },
         wrap: Wrappable,
+        health: Health { health: 100.0 },
     });
 }
 
@@ -71,6 +72,7 @@ struct PlayerBundle {
     velocity: Velocity,
     drag: Drag,
     wrap: Wrappable,
+    health: Health,
 }
 
 #[derive(Component)]
