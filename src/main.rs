@@ -56,6 +56,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         },
         wrap: Wrappable,
         health: Health { health: 100.0 },
+        affiliation: Affiliation::Friendly,
     });
 }
 
@@ -73,6 +74,7 @@ struct PlayerBundle {
     drag: Drag,
     wrap: Wrappable,
     health: Health,
+    affiliation: Affiliation,
 }
 
 #[derive(Component)]
@@ -196,6 +198,7 @@ struct AsteroidBundle {
     velocity: Velocity,
     wrap: Wrappable,
     asteroid: Asteroid,
+    affiliation: Affiliation,
 }
 
 fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
@@ -216,6 +219,7 @@ fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
             texture: assets.load("basic_asteroid_100.png"),
             ..Default::default()
         },
+        affiliation: Affiliation::Neutral,
     });
 
     commands.spawn(AsteroidBundle {
@@ -235,6 +239,7 @@ fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
             texture: assets.load("basic_asteroid_100.png"),
             ..Default::default()
         },
+        affiliation: Affiliation::Neutral,
     });
     commands.spawn(AsteroidBundle {
         asteroid: Asteroid,
@@ -253,6 +258,7 @@ fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
             texture: assets.load("basic_asteroid_100.png"),
             ..Default::default()
         },
+        affiliation: Affiliation::Neutral,
     });
 }
 
