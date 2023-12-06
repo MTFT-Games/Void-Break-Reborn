@@ -89,6 +89,8 @@ fn player_controller(
     mut query: Query<(&mut Velocity, &Transform), With<Player>>,
     keyboard: Res<Input<KeyCode>>,
     time: Res<Time>,
+    mut commands: Commands,
+    assets: Res<AssetServer>,
 ) {
     // If there are ever more than one player, something has gone very wrong
     let (mut player_velocity, player_transform) = query.single_mut();
@@ -107,6 +109,30 @@ fn player_controller(
     }
     if keyboard.pressed(KeyCode::D) {
         player_velocity.rotation_speed -= 2.0 * PI * time.delta_seconds();
+    }
+
+    if keyboard.just_pressed(KeyCode::Space) {
+        commands.spawn((
+            ProjectileBundle {
+                affiliation: Affiliation::Friendly,
+                collision: CollisionConfig { radius: 13.0 },
+                damage: Damage::Basic(5.0),
+                life: Lifetime {
+                    time: Timer::from_seconds(1.5, TimerMode::Once),
+                },
+                marker: Projectile,
+                velocity: Velocity {
+                    translation_speed: player_velocity.translation_speed + forward * 500.0,
+                    rotation_speed: 0.0,
+                },
+                sprite_bundle: SpriteBundle {
+                    transform: player_transform.clone(),
+                    texture: assets.load("basic_bullet_50.png"),
+                    ..Default::default()
+                },
+            },
+            Bullet,
+        ));
     }
 }
 
