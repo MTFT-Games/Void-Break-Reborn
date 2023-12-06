@@ -210,7 +210,7 @@ fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
             },
             rotation_speed: PI,
         },
-        collision: CollisionConfig { radius: 100.0 },
+        collision: CollisionConfig { radius: 50.0 },
         health: Health { health: 20.0 },
         sprite_bundle: SpriteBundle {
             texture: assets.load("basic_asteroid_100.png"),
@@ -229,7 +229,7 @@ fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
             },
             rotation_speed: PI,
         },
-        collision: CollisionConfig { radius: 100.0 },
+        collision: CollisionConfig { radius: 50.0 },
         health: Health { health: 20.0 },
         sprite_bundle: SpriteBundle {
             texture: assets.load("basic_asteroid_100.png"),
@@ -247,7 +247,7 @@ fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
             },
             rotation_speed: PI,
         },
-        collision: CollisionConfig { radius: 100.0 },
+        collision: CollisionConfig { radius: 50.0 },
         health: Health { health: 20.0 },
         sprite_bundle: SpriteBundle {
             texture: assets.load("basic_asteroid_100.png"),
