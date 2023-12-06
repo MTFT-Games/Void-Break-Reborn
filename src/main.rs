@@ -215,6 +215,43 @@ fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
             ..Default::default()
         },
     });
+
+    commands.spawn(AsteroidBundle {
+        asteroid: Asteroid,
+        wrap: Wrappable,
+        velocity: Velocity {
+            translation_speed: Vec3 {
+                x: -150.0,
+                y: -300.0,
+                z: 0.0,
+            },
+            rotation_speed: PI,
+        },
+        collision: CollisionConfig { radius: 100.0 },
+        health: Health { health: 20.0 },
+        sprite_bundle: SpriteBundle {
+            texture: assets.load("basic_asteroid_100.png"),
+            ..Default::default()
+        },
+    });
+    commands.spawn(AsteroidBundle {
+        asteroid: Asteroid,
+        wrap: Wrappable,
+        velocity: Velocity {
+            translation_speed: Vec3 {
+                x: 100.0,
+                y: -170.0,
+                z: 0.0,
+            },
+            rotation_speed: PI,
+        },
+        collision: CollisionConfig { radius: 100.0 },
+        health: Health { health: 20.0 },
+        sprite_bundle: SpriteBundle {
+            texture: assets.load("basic_asteroid_100.png"),
+            ..Default::default()
+        },
+    });
 }
 
 // ============================================================= Ripped from book fps counter
