@@ -57,6 +57,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         wrap: Wrappable,
         health: Health { health: 100.0 },
         affiliation: Affiliation::Friendly,
+        collision: CollisionConfig { radius: 65.0 },
     });
 }
 
@@ -75,6 +76,7 @@ struct PlayerBundle {
     wrap: Wrappable,
     health: Health,
     affiliation: Affiliation,
+    collision: CollisionConfig,
 }
 
 #[derive(Component)]
@@ -420,4 +422,5 @@ struct ProjectileBundle {
     marker: Projectile, // TODO: Standardize calling this property marker or the type name
     damage: Damage,
     life: Lifetime,
+    collision: CollisionConfig,
 }
