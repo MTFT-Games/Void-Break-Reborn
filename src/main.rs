@@ -7,8 +7,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
         .add_plugins(FrameTimeDiagnosticsPlugin)
-        .add_systems(Startup, spawn_core)
-        .add_systems(Startup, spawn_asteroids)
+        .add_systems(Startup, (spawn_core, spawn_asteroids))
         .add_systems(Startup, setup_fps_counter)
         .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
         .add_systems(Update, player_controller)
@@ -16,6 +15,7 @@ fn main() {
         .add_systems(Update, apply_drag)
         .add_systems(Update, camera_controller)
         .add_systems(Update, wrap)
+        .add_systems(Update, tick_lifetime)
         .run();
 }
 
@@ -184,11 +184,13 @@ struct Asteroid;
 
 #[derive(Component)]
 struct Health {
+    // Maybe make enum with hits varient
     health: f32,
 }
 
 #[derive(Component)]
-struct CollisionConfig { // This could eb an enum maybe for different types of collision boxes maybe. or contain one along with other info
+struct CollisionConfig {
+    // This could eb an enum maybe for different types of collision boxes maybe. or contain one along with other info
     radius: f32,
 }
 
@@ -392,7 +394,8 @@ fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<I
 }
 
 #[derive(Component)]
-enum Affiliation { // should this just be part of collision config?
+enum Affiliation {
+    // should this just be part of collision config?
     Friendly,
     Neutral,
     Hostile,
@@ -402,16 +405,14 @@ enum Affiliation { // should this just be part of collision config?
 struct Projectile;
 
 #[derive(Component)]
-enum Damage { // should this just be part of collision config?
+enum Damage {
+    // should this just be part of collision config?
     Basic(f32),
 }
 
 #[derive(Component)]
-enum Lifetime {
-    // Is this a good idea to make an enum? we will find out when i try to do stuff with it lol
-    Time(Timer), // This could also be replaced with health and applying damage over time...
-    Hits(u32),
-    // Should health be under this??? maybe? thats a later problem
+struct Lifetime {
+    time: Timer, // This could also be replaced with health and applying damage over time...
 }
 
 #[derive(Bundle)]
@@ -423,4 +424,10 @@ struct ProjectileBundle {
     damage: Damage,
     life: Lifetime,
     collision: CollisionConfig,
+}
+
+fn tick_lifetime(time: Res<Time>, mut lifetimes: Query<&mut Lifetime>) {
+    for mut lifetime in lifetimes.iter_mut() {
+        lifetime.time.tick(time.delta());
+    }
 }
