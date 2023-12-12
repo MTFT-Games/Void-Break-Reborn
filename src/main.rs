@@ -135,6 +135,7 @@ fn player_controller(
                 },
             },
             Bullet,
+            Wrappable,
         ));
     }
 }
