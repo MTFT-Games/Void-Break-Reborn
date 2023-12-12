@@ -7,6 +7,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
         .add_plugins(FrameTimeDiagnosticsPlugin)
+        .add_event::<CollisionEvent>()
         .add_systems(Startup, (spawn_core, spawn_asteroids))
         .add_systems(Startup, setup_fps_counter)
         .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
@@ -17,6 +18,7 @@ fn main() {
         .add_systems(Update, wrap)
         .add_systems(Update, tick_lifetime)
         .add_systems(Update, cull_bullets)
+        .add_systems(Update, check_collisions)
         .run();
 }
 
@@ -480,7 +482,25 @@ fn cull_bullets(query: Query<(Entity, &Lifetime), With<Bullet>>, mut commands: C
 struct CollisionEvent;
 
 fn check_collisions(
-    events: EventWriter<CollisionEvent>,
-    query: Query<(Entity, &CollisionConfig, &Affiliation)>,
+    mut events: EventWriter<CollisionEvent>,
+    query: Query<(Entity, &CollisionConfig, &Transform, Option<&Affiliation>)>,
 ) {
+    // TODO: this might be easier if affiliations were their own components instead of an enum
+    for [entity1, entity2] in query.iter_combinations() {
+        // TODO Make this more readable
+        // TODO Prevent friendly collisions
+        if entity1
+            .2
+            .translation
+            .xy()
+            .distance_squared(entity2.2.translation.xy())
+            < (entity1.1.radius + entity2.1.radius).powi(2)
+        {
+            events.send(CollisionEvent);
+            println!(
+                "Collision between entity {:?} and entity {:?}.",
+                entity1.0, entity2.0
+            );
+        }
+    }
 }
