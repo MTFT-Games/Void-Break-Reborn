@@ -475,3 +475,12 @@ fn cull_bullets(query: Query<(Entity, &Lifetime), With<Bullet>>, mut commands: C
         }
     }
 }
+
+#[derive(Event)]
+struct CollisionEvent;
+
+fn check_collisions(
+    events: EventWriter<CollisionEvent>,
+    query: Query<(Entity, &CollisionConfig, &Affiliation)>,
+) {
+}
