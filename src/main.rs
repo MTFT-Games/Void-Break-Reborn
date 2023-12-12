@@ -422,7 +422,7 @@ fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<I
     }
 }
 
-#[derive(Component)]
+#[derive(Component, PartialEq)]
 enum Affiliation {
     // should this just be part of collision config?
     Friendly,
@@ -488,7 +488,10 @@ fn check_collisions(
     // TODO: this might be easier if affiliations were their own components instead of an enum
     for [entity1, entity2] in query.iter_combinations() {
         // TODO Make this more readable
-        // TODO Prevent friendly collisions
+        // In the case that the entities are of the same affiliation, don't even check
+        if entity1.3.is_some() && entity1.3 == entity2.3 {
+            continue;
+        }
         if entity1
             .2
             .translation
@@ -496,6 +499,7 @@ fn check_collisions(
             .distance_squared(entity2.2.translation.xy())
             < (entity1.1.radius + entity2.1.radius).powi(2)
         {
+            // Collision detected
             events.send(CollisionEvent);
             println!(
                 "Collision between entity {:?} and entity {:?}.",
