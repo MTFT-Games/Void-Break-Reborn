@@ -19,6 +19,7 @@ fn main() {
         .add_systems(Update, tick_lifetime)
         .add_systems(Update, cull_bullets)
         .add_systems(Update, check_collisions)
+        .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
 
