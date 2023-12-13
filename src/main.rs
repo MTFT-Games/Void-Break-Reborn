@@ -56,101 +56,125 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         .with_children(|parent| {
             // This is kinda disgusting, make it a loop later TODO
             // Bottom left
-            parent.spawn(Camera2dBundle {
-                transform: Transform::from_xyz(-1024.0, -1024.0, 0.0),
-                camera: Camera {
-                    order: 1,
+            parent.spawn((
+                UiCameraConfig { show_ui: false },
+                Camera2dBundle {
+                    transform: Transform::from_xyz(-1024.0, -1024.0, 0.0),
+                    camera: Camera {
+                        order: 1,
+                        ..Default::default()
+                    },
+                    camera_2d: Camera2d {
+                        clear_color: ClearColorConfig::None,
+                    },
                     ..Default::default()
                 },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
-                ..Default::default()
-            });
+            ));
             // Bottom middle
-            parent.spawn(Camera2dBundle {
-                transform: Transform::from_xyz(0.0, -1024.0, 0.0),
-                camera: Camera {
-                    order: 2,
+            parent.spawn((
+                UiCameraConfig { show_ui: false },
+                Camera2dBundle {
+                    transform: Transform::from_xyz(0.0, -1024.0, 0.0),
+                    camera: Camera {
+                        order: 2,
+                        ..Default::default()
+                    },
+                    camera_2d: Camera2d {
+                        clear_color: ClearColorConfig::None,
+                    },
                     ..Default::default()
                 },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
-                ..Default::default()
-            });
+            ));
             // Bottom right
-            parent.spawn(Camera2dBundle {
-                transform: Transform::from_xyz(1024.0, -1024.0, 0.0),
-                camera: Camera {
-                    order: 3,
+            parent.spawn((
+                UiCameraConfig { show_ui: false },
+                Camera2dBundle {
+                    transform: Transform::from_xyz(1024.0, -1024.0, 0.0),
+                    camera: Camera {
+                        order: 3,
+                        ..Default::default()
+                    },
+                    camera_2d: Camera2d {
+                        clear_color: ClearColorConfig::None,
+                    },
                     ..Default::default()
                 },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
-                ..Default::default()
-            });
+            ));
             // Top left
-            parent.spawn(Camera2dBundle {
-                transform: Transform::from_xyz(-1024.0, 1024.0, 0.0),
-                camera: Camera {
-                    order: 4,
+            parent.spawn((
+                UiCameraConfig { show_ui: false },
+                Camera2dBundle {
+                    transform: Transform::from_xyz(-1024.0, 1024.0, 0.0),
+                    camera: Camera {
+                        order: 4,
+                        ..Default::default()
+                    },
+                    camera_2d: Camera2d {
+                        clear_color: ClearColorConfig::None,
+                    },
                     ..Default::default()
                 },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
-                ..Default::default()
-            });
+            ));
             // Top middle
-            parent.spawn(Camera2dBundle {
-                transform: Transform::from_xyz(0.0, 1024.0, 0.0),
-                camera: Camera {
-                    order: 5,
+            parent.spawn((
+                UiCameraConfig { show_ui: false },
+                Camera2dBundle {
+                    transform: Transform::from_xyz(0.0, 1024.0, 0.0),
+                    camera: Camera {
+                        order: 5,
+                        ..Default::default()
+                    },
+                    camera_2d: Camera2d {
+                        clear_color: ClearColorConfig::None,
+                    },
                     ..Default::default()
                 },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
-                ..Default::default()
-            });
+            ));
             // Top right
-            parent.spawn(Camera2dBundle {
-                transform: Transform::from_xyz(1024.0, 1024.0, 0.0),
-                camera: Camera {
-                    order: 6,
+            parent.spawn((
+                UiCameraConfig { show_ui: false },
+                Camera2dBundle {
+                    transform: Transform::from_xyz(1024.0, 1024.0, 0.0),
+                    camera: Camera {
+                        order: 6,
+                        ..Default::default()
+                    },
+                    camera_2d: Camera2d {
+                        clear_color: ClearColorConfig::None,
+                    },
                     ..Default::default()
                 },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
-                ..Default::default()
-            });
+            ));
             // Left
-            parent.spawn(Camera2dBundle {
-                transform: Transform::from_xyz(-1024.0, 0.0, 0.0),
-                camera: Camera {
-                    order: 7,
+            parent.spawn((
+                UiCameraConfig { show_ui: false },
+                Camera2dBundle {
+                    transform: Transform::from_xyz(-1024.0, 0.0, 0.0),
+                    camera: Camera {
+                        order: 7,
+                        ..Default::default()
+                    },
+                    camera_2d: Camera2d {
+                        clear_color: ClearColorConfig::None,
+                    },
                     ..Default::default()
                 },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
-                ..Default::default()
-            });
+            ));
             // Right
-            parent.spawn(Camera2dBundle {
-                transform: Transform::from_xyz(1024.0, 0.0, 0.0),
-                camera: Camera {
-                    order: 8,
+            parent.spawn((
+                UiCameraConfig { show_ui: false },
+                Camera2dBundle {
+                    transform: Transform::from_xyz(1024.0, 0.0, 0.0),
+                    camera: Camera {
+                        order: 8,
+                        ..Default::default()
+                    },
+                    camera_2d: Camera2d {
+                        clear_color: ClearColorConfig::None,
+                    },
                     ..Default::default()
                 },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
-                ..Default::default()
-            });
+            ));
         });
     commands.spawn(PlayerBundle {
         sprite_bundle: SpriteBundle {
