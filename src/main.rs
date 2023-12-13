@@ -1,3 +1,4 @@
+use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
@@ -33,18 +34,118 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         },
         Background {
             size: Vec2 {
-                x: 1024.0,
+                x: 1024.0, // make this a variable to use elsewhere
                 y: 1024.0,
             },
         },
         RenderLayers::layer(1),
     ));
-    commands.spawn((
-        // Main camera
-        Camera2dBundle::default(),
-        RenderLayers::from_layers(&[0, 1]),
-        MainCamera,
-    ));
+    commands
+        .spawn((
+            // Main camera
+            Camera2dBundle::default(),
+            RenderLayers::from_layers(&[0, 1]),
+            MainCamera,
+        ))
+        .with_children(|parent| {
+            // This is kinda disgusting, make it a loop later TODO
+            // Bottom left
+            parent.spawn(Camera2dBundle {
+                transform: Transform::from_xyz(-1024.0, -1024.0, 0.0),
+                camera: Camera {
+                    order: 1,
+                    ..Default::default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..Default::default()
+            });
+            // Bottom middle
+            parent.spawn(Camera2dBundle {
+                transform: Transform::from_xyz(0.0, -1024.0, 0.0),
+                camera: Camera {
+                    order: 2,
+                    ..Default::default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..Default::default()
+            });
+            // Bottom right
+            parent.spawn(Camera2dBundle {
+                transform: Transform::from_xyz(1024.0, -1024.0, 0.0),
+                camera: Camera {
+                    order: 3,
+                    ..Default::default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..Default::default()
+            });
+            // Top left
+            parent.spawn(Camera2dBundle {
+                transform: Transform::from_xyz(-1024.0, 1024.0, 0.0),
+                camera: Camera {
+                    order: 4,
+                    ..Default::default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..Default::default()
+            });
+            // Top middle
+            parent.spawn(Camera2dBundle {
+                transform: Transform::from_xyz(0.0, 1024.0, 0.0),
+                camera: Camera {
+                    order: 5,
+                    ..Default::default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..Default::default()
+            });
+            // Top right
+            parent.spawn(Camera2dBundle {
+                transform: Transform::from_xyz(1024.0, 1024.0, 0.0),
+                camera: Camera {
+                    order: 6,
+                    ..Default::default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..Default::default()
+            });
+            // Left
+            parent.spawn(Camera2dBundle {
+                transform: Transform::from_xyz(-1024.0, 0.0, 0.0),
+                camera: Camera {
+                    order: 7,
+                    ..Default::default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..Default::default()
+            });
+            // Right
+            parent.spawn(Camera2dBundle {
+                transform: Transform::from_xyz(1024.0, 0.0, 0.0),
+                camera: Camera {
+                    order: 8,
+                    ..Default::default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..Default::default()
+            });
+        });
     commands.spawn(PlayerBundle {
         sprite_bundle: SpriteBundle {
             // TODO: Might want to set sprite size
