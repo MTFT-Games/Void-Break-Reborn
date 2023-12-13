@@ -13,7 +13,7 @@ fn main() {
         .add_plugins(FrameTimeDiagnosticsPlugin)
         .add_event::<CollisionEvent>()
         .add_systems(Startup, (spawn_core, spawn_asteroids))
-        .add_systems(Startup, setup_fps_counter)
+        .add_systems(Startup, (setup_fps_counter, setup_ui))
         .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
         .add_systems(Update, player_controller.before(movement))
         .add_systems(Update, movement)
@@ -21,6 +21,7 @@ fn main() {
         .add_systems(Update, (camera_controller, check_collisions).after(wrap))
         .add_systems(Update, wrap.after(movement))
         .add_systems(Update, tick_lifetime)
+        .add_systems(Update, update_player_ui)
         .add_systems(
             Update,
             (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
@@ -189,7 +190,10 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             rotational: 2.0,
         },
         wrap: Wrappable,
-        health: Health { health: 100.0 },
+        health: Health {
+            health: 100.0,
+            max: 100.0,
+        },
         affiliation: Affiliation::Friendly,
         collision: CollisionConfig { radius: 65.0 },
         damage: Damage::Basic(50.0),
@@ -347,8 +351,9 @@ struct Asteroid;
 
 #[derive(Component)]
 struct Health {
-    // Maybe make enum with hits variant
+    // Maybe make enum with hits and hp variants
     health: f32,
+    max: f32,
 }
 
 #[derive(Component)]
@@ -389,7 +394,10 @@ fn spawn_asteroids(
                 rotation_speed: rng.gen_range(-10.0..10.0),
             },
             collision: CollisionConfig { radius: 50.0 },
-            health: Health { health: 20.0 },
+            health: Health {
+                health: 20.0,
+                max: 20.0,
+            },
             sprite_bundle: SpriteBundle {
                 texture: assets.load("basic_asteroid_100.png"),
                 transform: Transform::from_xyz(
@@ -706,4 +714,82 @@ fn hurt_player(
             }
         }
     }
+}
+
+#[derive(Component)]
+struct UiHealthBack;
+#[derive(Component)]
+struct UiHealthFront;
+
+fn setup_ui(mut commands: Commands) {
+    // TODO: move fps to this root since i think you can only have one root. Maybe????
+    // TODO: make it scale well
+    // I think this will just be for player health/shield
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(10.0),
+                height: Val::Px(50.0),
+                width: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
+
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            // Health background
+            parent
+                .spawn((
+                    NodeBundle {
+                        background_color: BackgroundColor(Color::Rgba {
+                            red: 0.3,
+                            green: 0.3,
+                            blue: 0.3,
+                            alpha: 1.0,
+                        }),
+                        style: Style {
+                            height: Val::Px(15.0),
+                            width: Val::Px(100.0),
+                            justify_content: JustifyContent::Center,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
+                    UiHealthBack,
+                ))
+                .with_children(|parent| {
+                    // Health foreground
+                    parent.spawn((
+                        NodeBundle {
+                            background_color: BackgroundColor(Color::Rgba {
+                                red: 1.0,
+                                green: 0.0,
+                                blue: 0.0,
+                                alpha: 1.0,
+                            }),
+                            style: Style {
+                                width: Val::Percent(50.0),
+                                height: Val::Percent(100.0),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        },
+                        UiHealthFront,
+                    ));
+                });
+        });
+}
+
+fn update_player_ui(
+    mut health_back: Query<&mut Style, (With<UiHealthBack>, Without<UiHealthFront>)>,
+    mut health_front: Query<&mut Style, (With<UiHealthFront>, Without<UiHealthBack>)>,
+    player_stats: Query<&Health, With<Player>>,
+) {
+    // more than one ui is a yike
+    let stats = player_stats.single();
+    health_back.single_mut().width = Val::Px(stats.max);
+    health_front.single_mut().width = Val::Px(stats.health);
 }
