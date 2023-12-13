@@ -3,12 +3,14 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 use bevy_rand::prelude::*;
+#[cfg(feature = "devcade")]
+use devcaders;
 use rand::Rng;
 use std::f32::consts::PI;
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
+    let mut game = App::new();
+    game.add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
         .add_plugins(EntropyPlugin::<WyRand>::default())
         .add_plugins(FrameTimeDiagnosticsPlugin)
         .add_event::<CollisionEvent>()
@@ -26,8 +28,15 @@ fn main() {
             Update,
             (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
         )
-        .add_systems(Update, bevy::window::close_on_esc)
-        .run();
+        .add_systems(Update, bevy::window::close_on_esc);
+
+    #[cfg(feature = "devcade")]
+    game.add_systems(Update, devcaders::close_on_menu_buttons);
+
+    #[cfg(feature = "devcade")]
+    println!("devcade feature active");
+
+    game.run();
 }
 
 /// Spawn the core components needed for basic game function: Background, Player, and Camera
@@ -704,7 +713,7 @@ fn break_asteroids(
                         let divisions = rng.gen_range(0..max_divisions);
                         let new_size = size / divisions.max(2) as f32;
                         // TODO make this more random and conserve momentum
-                        for d in 0..divisions {
+                        for _d in 0..divisions {
                             let direction = rng.gen_range(0.0..PI * 2.0);
                             let speed = rng.gen_range(0.0..3000.0 / new_size);
                             commands.spawn(AsteroidBundle {
