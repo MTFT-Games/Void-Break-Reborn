@@ -186,7 +186,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         player: Player,
         velocity: Velocity::default(),
         drag: Drag {
-            translational: 0.5,
+            translational: 1.5,
             rotational: 2.0,
         },
         wrap: Wrappable,
@@ -236,11 +236,11 @@ fn player_controller(
     let forward = player_transform.local_y();
 
     if keyboard.pressed(KeyCode::W) {
-        player_velocity.translation_speed += forward * 200.0 * time.delta_seconds();
+        player_velocity.translation_speed += forward * 1000.0 * time.delta_seconds();
     }
     // TODO: lock reverse behind an upgrade later
     if keyboard.pressed(KeyCode::S) {
-        player_velocity.translation_speed -= forward * 200.0 * time.delta_seconds();
+        player_velocity.translation_speed -= forward * 1000.0 * time.delta_seconds();
     }
 
     if keyboard.pressed(KeyCode::A) {
