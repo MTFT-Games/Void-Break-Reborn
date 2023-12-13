@@ -339,65 +339,39 @@ struct AsteroidBundle {
     affiliation: Affiliation,
 }
 
-fn spawn_asteroids(mut commands: Commands, assets: Res<AssetServer>) {
-    commands.spawn(AsteroidBundle {
-        asteroid: Asteroid,
-        wrap: Wrappable,
-        velocity: Velocity {
-            translation_speed: Vec3 {
-                x: 200.0,
-                y: 100.0,
-                z: 0.0,
+fn spawn_asteroids(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
+) {
+    for _ in 0..4 {
+        let direction = rng.gen_range(0.0..PI * 2.0);
+        let speed = rng.gen_range(0.0..300.0);
+        commands.spawn(AsteroidBundle {
+            asteroid: Asteroid,
+            wrap: Wrappable,
+            velocity: Velocity {
+                translation_speed: Vec3 {
+                    x: direction.cos(),
+                    y: direction.sin(),
+                    z: 0.0,
+                } * speed,
+                rotation_speed: rng.gen_range(-10.0..10.0),
             },
-            rotation_speed: PI,
-        },
-        collision: CollisionConfig { radius: 50.0 },
-        health: Health { health: 20.0 },
-        sprite_bundle: SpriteBundle {
-            texture: assets.load("basic_asteroid_100.png"),
-            ..Default::default()
-        },
-        affiliation: Affiliation::Neutral,
-    });
-
-    commands.spawn(AsteroidBundle {
-        asteroid: Asteroid,
-        wrap: Wrappable,
-        velocity: Velocity {
-            translation_speed: Vec3 {
-                x: -150.0,
-                y: -300.0,
-                z: 0.0,
+            collision: CollisionConfig { radius: 50.0 },
+            health: Health { health: 20.0 },
+            sprite_bundle: SpriteBundle {
+                texture: assets.load("basic_asteroid_100.png"),
+                transform: Transform::from_xyz(
+                    rng.gen_range(-1000.0..1000.0),
+                    rng.gen_range(-1000.0..1000.0),
+                    0.0,
+                ),
+                ..Default::default()
             },
-            rotation_speed: PI,
-        },
-        collision: CollisionConfig { radius: 50.0 },
-        health: Health { health: 20.0 },
-        sprite_bundle: SpriteBundle {
-            texture: assets.load("basic_asteroid_100.png"),
-            ..Default::default()
-        },
-        affiliation: Affiliation::Neutral,
-    });
-    commands.spawn(AsteroidBundle {
-        asteroid: Asteroid,
-        wrap: Wrappable,
-        velocity: Velocity {
-            translation_speed: Vec3 {
-                x: 100.0,
-                y: -170.0,
-                z: 0.0,
-            },
-            rotation_speed: PI,
-        },
-        collision: CollisionConfig { radius: 50.0 },
-        health: Health { health: 20.0 },
-        sprite_bundle: SpriteBundle {
-            texture: assets.load("basic_asteroid_100.png"),
-            ..Default::default()
-        },
-        affiliation: Affiliation::Neutral,
-    });
+            affiliation: Affiliation::Neutral,
+        });
+    }
 }
 
 // ============================================================= Ripped from book fps counter
