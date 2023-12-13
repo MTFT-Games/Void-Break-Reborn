@@ -662,14 +662,16 @@ fn check_collisions(
 }
 
 fn break_asteroids(
-    mut query: Query<(Entity, &mut Health), With<Asteroid>>,
+    mut query: Query<(Entity, &mut Health, &Transform), With<Asteroid>>,
     mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
+    assets: Res<AssetServer>,
 ) {
     // TODO rewrite cull_bullets in this way maybe. This is also kinda gross tho
     for collision in collisions.read() {
         for i in 0..=1 {
-            if let Ok((entity, mut health)) = query.get_mut(collision.entities[i]) {
+            if let Ok((entity, mut health, transform)) = query.get_mut(collision.entities[i]) {
                 // Asteroid collision
                 // TODO collision resolution
 
@@ -683,8 +685,47 @@ fn break_asteroids(
                     // Only need to check if the asteroid should die if its health changed,
                     // which is presumed to only happen here
                     if health.health <= 0.0 {
-                        // TODO spawn fragments
                         commands.entity(entity).despawn();
+
+                        // Fragment
+                        let size = health.max * 2.0;
+                        let max_divisions = (size / 10.0).min(5.0) as i32;
+                        let divisions = rng.gen_range(0..max_divisions);
+                        let new_size = size / divisions.max(2) as f32;
+                        // TODO make this more random and conserve momentum
+                        for d in 0..divisions {
+                            let direction = rng.gen_range(0.0..PI * 2.0);
+                            let speed = rng.gen_range(0.0..3000.0 / new_size);
+                            commands.spawn(AsteroidBundle {
+                                collision: CollisionConfig {
+                                    radius: new_size / 2.0,
+                                },
+                                damage: Damage::Basic(new_size / 3.0),
+                                health: Health {
+                                    health: new_size / 2.0,
+                                    max: new_size / 2.0,
+                                },
+                                sprite_bundle: SpriteBundle {
+                                    sprite: Sprite {
+                                        custom_size: Some(Vec2::splat(new_size)),
+                                        ..Default::default()
+                                    },
+                                    transform: Transform::from_translation(transform.translation),
+                                    texture: assets.load("basic_asteroid_100.png"),
+                                    ..Default::default()
+                                },
+                                velocity: Velocity {
+                                    translation_speed: Vec3 {
+                                        x: direction.cos(),
+                                        y: direction.sin(),
+                                        z: 0.0,
+                                    } * speed,
+                                    rotation_speed: rng
+                                        .gen_range(-100.0 / new_size..100.0 / new_size),
+                                },
+                                ..Default::default()
+                            });
+                        }
                     }
                 }
             }
