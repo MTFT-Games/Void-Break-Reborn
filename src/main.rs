@@ -2,7 +2,6 @@ use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
-use bevy::transform::commands;
 use bevy_rand::prelude::*;
 use rand::Rng;
 use std::f32::consts::PI;
