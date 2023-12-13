@@ -471,16 +471,30 @@ struct Bullet;
 // use health and constant damage over time... or doo something else special, maybe events can help
 // for now this will work
 // also, is there any situation where a lifetime ticking and checking to despawn need to be separate? or should all controllers/death handlers also do the ticking...?
-fn cull_bullets(query: Query<(Entity, &Lifetime), With<Bullet>>, mut commands: Commands) {
+fn cull_bullets(
+    query: Query<(Entity, &Lifetime), With<Bullet>>,
+    mut commands: Commands,
+    mut collisions: EventReader<CollisionEvent>,
+) {
     for (entity, lifetime) in query.iter() {
         if lifetime.time.finished() {
             commands.entity(entity).despawn();
         }
     }
+    for collision in collisions.read() {
+        if query.contains(collision.entities[0]) {
+            commands.entity(collision.entities[0]).despawn();
+        }
+        if query.contains(collision.entities[1]) {
+            commands.entity(collision.entities[1]).despawn();
+        }
+    }
 }
 
 #[derive(Event)]
-struct CollisionEvent;
+struct CollisionEvent {
+    entities: [Entity; 2],
+}
 
 fn check_collisions(
     mut events: EventWriter<CollisionEvent>,
@@ -501,7 +515,9 @@ fn check_collisions(
             < (entity1.1.radius + entity2.1.radius).powi(2)
         {
             // Collision detected
-            events.send(CollisionEvent);
+            events.send(CollisionEvent {
+                entities: [entity1.0, entity2.0],
+            });
             println!(
                 "Collision between entity {:?} and entity {:?}.",
                 entity1.0, entity2.0
