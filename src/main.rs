@@ -21,7 +21,10 @@ fn main() {
         .add_systems(Update, (camera_controller, check_collisions).after(wrap))
         .add_systems(Update, wrap.after(movement))
         .add_systems(Update, tick_lifetime)
-        .add_systems(Update, cull_bullets.after(check_collisions))
+        .add_systems(
+            Update,
+            (cull_bullets, break_asteroids).after(check_collisions),
+        )
         .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
@@ -165,6 +168,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
         health: Health { health: 100.0 },
         affiliation: Affiliation::Friendly,
         collision: CollisionConfig { radius: 65.0 },
+        damage: Damage::Basic(50.0),
     });
 }
 
@@ -184,6 +188,7 @@ struct PlayerBundle {
     health: Health,
     affiliation: Affiliation,
     collision: CollisionConfig,
+    damage: Damage,
 }
 
 #[derive(Component)]
@@ -512,7 +517,7 @@ enum Affiliation {
 #[derive(Component)]
 struct Projectile;
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 enum Damage {
     // should this just be part of collision config?
     Basic(f32),
@@ -572,11 +577,19 @@ fn cull_bullets(
 #[derive(Event)]
 struct CollisionEvent {
     entities: [Entity; 2],
+    damage: [Option<Damage>; 2],
+    // Potentially useful in the future: direction vector with magnitude of overlap, knockback stats, weather it needs to be resolved
 }
 
 fn check_collisions(
     mut events: EventWriter<CollisionEvent>,
-    query: Query<(Entity, &CollisionConfig, &Transform, Option<&Affiliation>)>,
+    query: Query<(
+        Entity,
+        &CollisionConfig,
+        &Transform,
+        Option<&Affiliation>,
+        Option<&Damage>,
+    )>,
 ) {
     // TODO: this might be easier if affiliations were their own components instead of an enum
     for [entity1, entity2] in query.iter_combinations() {
@@ -595,11 +608,43 @@ fn check_collisions(
             // Collision detected
             events.send(CollisionEvent {
                 entities: [entity1.0, entity2.0],
+                damage: [entity1.4.cloned(), entity2.4.cloned()],
             });
             println!(
                 "Collision between entity {:?} and entity {:?}.",
                 entity1.0, entity2.0
             );
+        }
+    }
+}
+
+fn break_asteroids(
+    mut query: Query<(Entity, &mut Health), With<Asteroid>>,
+    mut commands: Commands,
+    mut collisions: EventReader<CollisionEvent>,
+) {
+    // TODO rewrite cull_bullets in this way maybe. This is also kinda gross tho
+    for collision in collisions.read() {
+        for i in 0..=1 {
+            if let Ok((entity, mut health)) = query.get_mut(collision.entities[i]) {
+                // Asteroid collision
+                // TODO collision resolution
+
+                if let Some(damage) = &collision.damage[i.abs_diff(1)] {
+                    match damage {
+                        Damage::Basic(dmg) => {
+                            health.health -= dmg;
+                        }
+                    }
+
+                    // Only need to check if the asteroid should die if its health changed,
+                    // which is presumed to only happen here
+                    if health.health <= 0.0 {
+                        // TODO spawn fragments
+                        commands.entity(entity).despawn();
+                    }
+                }
+            }
         }
     }
 }
