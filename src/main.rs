@@ -23,7 +23,7 @@ fn main() {
         .add_systems(Update, tick_lifetime)
         .add_systems(
             Update,
-            (cull_bullets, break_asteroids).after(check_collisions),
+            (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
         )
         .add_systems(Update, bevy::window::close_on_esc)
         .run();
@@ -342,6 +342,7 @@ struct AsteroidBundle {
     wrap: Wrappable,
     asteroid: Asteroid,
     affiliation: Affiliation,
+    damage: Damage,
 }
 
 fn spawn_asteroids(
@@ -375,6 +376,7 @@ fn spawn_asteroids(
                 ..Default::default()
             },
             affiliation: Affiliation::Neutral,
+            damage: Damage::Basic(50.0),
         });
     }
 }
@@ -644,6 +646,39 @@ fn break_asteroids(
                         commands.entity(entity).despawn();
                     }
                 }
+            }
+        }
+    }
+}
+
+fn hurt_player(
+    mut query: Query<(Entity, &mut Health), With<Player>>,
+    mut commands: Commands,
+    mut collisions: EventReader<CollisionEvent>,
+) {
+    for collision in collisions.read() {
+        for i in 0..=1 {
+            if let Ok((entity, mut health)) = query.get_mut(collision.entities[i]) {
+                // Player collision
+                // TODO collision resolution
+
+                if let Some(damage) = &collision.damage[i.abs_diff(1)] {
+                    match damage {
+                        Damage::Basic(dmg) => {
+                            health.health -= dmg;
+                        }
+                    }
+
+                    // Only need to check if the player should die if its health changed,
+                    // which is presumed to only happen here.
+                    if health.health <= 0.0 {
+                        // TODO game over. for now this will prob crash on player death
+                        commands.entity(entity).despawn();
+                    }
+                }
+                // Since there should only be one player, this skips checking the other
+                // collision entity if the first one is the player
+                break;
             }
         }
     }
