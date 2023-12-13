@@ -322,7 +322,7 @@ fn camera_controller(
     camera_transform.translation = player_transform.translation;
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Wrappable;
 
 fn wrap(
@@ -346,23 +346,23 @@ fn wrap(
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Asteroid;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Health {
     // Maybe make enum with hits and hp variants
     health: f32,
     max: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct CollisionConfig {
     // This could eb an enum maybe for different types of collision boxes maybe. or contain one along with other info
     radius: f32,
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 struct AsteroidBundle {
     collision: CollisionConfig,
     health: Health,
@@ -380,23 +380,14 @@ fn spawn_asteroids(
     mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
     for _ in 0..4 {
+        let size: f32 = rng.gen_range(10.0..100.0);
         let direction = rng.gen_range(0.0..PI * 2.0);
-        let speed = rng.gen_range(0.0..300.0);
+        let speed = rng.gen_range(0.0..3000.0 / size);
         commands.spawn(AsteroidBundle {
-            asteroid: Asteroid,
-            wrap: Wrappable,
-            velocity: Velocity {
-                translation_speed: Vec3 {
-                    x: direction.cos(),
-                    y: direction.sin(),
-                    z: 0.0,
-                } * speed,
-                rotation_speed: rng.gen_range(-10.0..10.0),
-            },
-            collision: CollisionConfig { radius: 50.0 },
+            collision: CollisionConfig { radius: size / 2.0 },
             health: Health {
-                health: 20.0,
-                max: 20.0,
+                health: size / 2.0,
+                max: size / 2.0,
             },
             sprite_bundle: SpriteBundle {
                 texture: assets.load("basic_asteroid_100.png"),
@@ -405,10 +396,22 @@ fn spawn_asteroids(
                     rng.gen_range(-1000.0..1000.0),
                     0.0,
                 ),
+                sprite: Sprite {
+                    custom_size: Some(Vec2 { x: size, y: size }),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
-            affiliation: Affiliation::Neutral,
-            damage: Damage::Basic(50.0),
+            velocity: Velocity {
+                translation_speed: Vec3 {
+                    x: direction.cos(),
+                    y: direction.sin(),
+                    z: 0.0,
+                } * speed,
+                rotation_speed: rng.gen_range(-100.0 / size..100.0 / size),
+            },
+            damage: Damage::Basic(size / 3.0),
+            ..Default::default()
         });
     }
 }
@@ -540,10 +543,11 @@ fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<I
     }
 }
 
-#[derive(Component, PartialEq)]
+#[derive(Component, PartialEq, Default)]
 enum Affiliation {
     // should this just be part of collision config?
     Friendly,
+    #[default]
     Neutral,
     Hostile,
 }
@@ -555,6 +559,11 @@ struct Projectile;
 enum Damage {
     // should this just be part of collision config?
     Basic(f32),
+}
+impl Default for Damage {
+    fn default() -> Self {
+        Damage::Basic(0.0)
+    }
 }
 
 #[derive(Component)]
