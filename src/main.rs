@@ -2,11 +2,14 @@ use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
+use bevy_rand::prelude::*;
+use rand::Rng;
 use std::f32::consts::PI;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
+        .add_plugins(EntropyPlugin::<WyRand>::default())
         .add_plugins(FrameTimeDiagnosticsPlugin)
         .add_event::<CollisionEvent>()
         .add_systems(Startup, (spawn_core, spawn_asteroids))
