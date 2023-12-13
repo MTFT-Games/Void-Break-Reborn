@@ -11,14 +11,13 @@ fn main() {
         .add_systems(Startup, (spawn_core, spawn_asteroids))
         .add_systems(Startup, setup_fps_counter)
         .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
-        .add_systems(Update, player_controller)
+        .add_systems(Update, player_controller.before(movement))
         .add_systems(Update, movement)
         .add_systems(Update, apply_drag)
-        .add_systems(Update, camera_controller)
-        .add_systems(Update, wrap)
+        .add_systems(Update, (camera_controller, check_collisions).after(wrap))
+        .add_systems(Update, wrap.after(movement))
         .add_systems(Update, tick_lifetime)
-        .add_systems(Update, cull_bullets)
-        .add_systems(Update, check_collisions)
+        .add_systems(Update, cull_bullets.after(check_collisions))
         .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
