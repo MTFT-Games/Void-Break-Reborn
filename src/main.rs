@@ -2,6 +2,7 @@ use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
+use bevy::transform::commands;
 use bevy_rand::prelude::*;
 use rand::Rng;
 use std::f32::consts::PI;
@@ -273,6 +274,10 @@ fn player_controller(
             Bullet,
             Wrappable,
         ));
+        commands.spawn(AudioBundle {
+            source: assets.load("shoot1.wav"),
+            settings: PlaybackSettings::DESPAWN,
+        });
     }
 }
 
@@ -681,12 +686,19 @@ fn break_asteroids(
                             health.health -= dmg;
                         }
                     }
+                    commands.spawn(AudioBundle {
+                        source: assets.load("hit1.wav"),
+                        settings: PlaybackSettings::DESPAWN,
+                    });
 
                     // Only need to check if the asteroid should die if its health changed,
                     // which is presumed to only happen here
                     if health.health <= 0.0 {
                         commands.entity(entity).despawn();
-
+                        commands.spawn(AudioBundle {
+                            source: assets.load("hit2.wav"),
+                            settings: PlaybackSettings::DESPAWN,
+                        });
                         // Fragment
                         let size = health.max * 2.0;
                         let max_divisions = (size / 10.0).min(5.0) as i32;
