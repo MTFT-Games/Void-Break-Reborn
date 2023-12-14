@@ -3,9 +3,9 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 use bevy_rand::prelude::*;
-#[cfg(feature = "devcade")]
 use devcaders;
 use rand::Rng;
+use std::env;
 use std::f32::consts::PI;
 
 fn main() {
@@ -30,11 +30,14 @@ fn main() {
         )
         .add_systems(Update, bevy::window::close_on_esc);
 
-    #[cfg(feature = "devcade")]
+    // TODO: Only on devcade
     game.add_systems(Update, devcaders::close_on_menu_buttons);
 
-    #[cfg(feature = "devcade")]
-    println!("devcade feature active");
+    // For testing to see what i can check for to evaluate devcade presence
+    println!("Environment vars:");
+    for var in env::vars() {
+        println!("{}: {}", var.0, var.1);
+    }
 
     game.run();
 }
@@ -239,27 +242,56 @@ fn player_controller(
     time: Res<Time>,
     mut commands: Commands,
     assets: Res<AssetServer>,
+    devcade_controls: devcaders::DevcadeControls,
 ) {
     // If there are ever more than one player, something has gone very wrong
     let (mut player_velocity, player_transform) = query.single_mut();
     let forward = player_transform.local_y();
 
-    if keyboard.pressed(KeyCode::W) {
+    // Once a more configurable input system is set up,
+    // TODO set devcade controls there instead of adding them to conditionals
+    let mut forward_control = keyboard.pressed(KeyCode::W);
+    // TODO: only on devcade
+    forward_control = forward_control
+        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickUp)
+        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickUp);
+    let mut back_control = keyboard.pressed(KeyCode::S);
+    // TODO: only on devcade
+    back_control = back_control
+        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickDown)
+        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickDown);
+    let mut left_control = keyboard.pressed(KeyCode::A);
+    // TODO: only on devcade
+    left_control = left_control
+        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickLeft)
+        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickLeft);
+    let mut right_control = keyboard.pressed(KeyCode::D);
+    // TODO: only on devcade
+    right_control = right_control
+        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickRight)
+        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickRight);
+    let mut shoot_control = keyboard.pressed(KeyCode::Space);
+    // TODO: only on devcade
+    shoot_control = shoot_control
+        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::A1)
+        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::A1);
+
+    if forward_control {
         player_velocity.translation_speed += forward * 1000.0 * time.delta_seconds();
     }
     // TODO: lock reverse behind an upgrade later
-    if keyboard.pressed(KeyCode::S) {
+    if back_control {
         player_velocity.translation_speed -= forward * 1000.0 * time.delta_seconds();
     }
 
-    if keyboard.pressed(KeyCode::A) {
+    if left_control {
         player_velocity.rotation_speed += 2.0 * PI * time.delta_seconds();
     }
-    if keyboard.pressed(KeyCode::D) {
+    if right_control {
         player_velocity.rotation_speed -= 2.0 * PI * time.delta_seconds();
     }
 
-    if keyboard.just_pressed(KeyCode::Space) {
+    if shoot_control {
         commands.spawn((
             ProjectileBundle {
                 affiliation: Affiliation::Friendly,
