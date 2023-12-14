@@ -201,7 +201,10 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             max: 100.0,
         },
         affiliation: Affiliation::Friendly,
-        collision: CollisionConfig { radius: 65.0 },
+        collision: CollisionConfig {
+            radius: 65.0,
+            ..Default::default()
+        },
         damage: Damage::Basic(50.0),
     });
 }
@@ -289,7 +292,10 @@ fn player_controller(
         commands.spawn((
             ProjectileBundle {
                 affiliation: Affiliation::Friendly,
-                collision: CollisionConfig { radius: 13.0 },
+                collision: CollisionConfig {
+                    radius: 13.0,
+                    collision_resolution: CollisionResolutionStrat::Prevent,
+                },
                 damage: Damage::Basic(5.0),
                 life: Lifetime {
                     time: Timer::from_seconds(1.5, TimerMode::Once),
@@ -399,6 +405,7 @@ struct Health {
 struct CollisionConfig {
     // This could eb an enum maybe for different types of collision boxes maybe. or contain one along with other info
     radius: f32,
+    collision_resolution: CollisionResolutionStrat,
 }
 
 #[derive(Bundle, Default)]
@@ -423,7 +430,10 @@ fn spawn_asteroids(
         let direction = rng.gen_range(0.0..PI * 2.0);
         let speed = rng.gen_range(0.0..3000.0 / size);
         commands.spawn(AsteroidBundle {
-            collision: CollisionConfig { radius: size / 2.0 },
+            collision: CollisionConfig {
+                radius: size / 2.0,
+                ..Default::default()
+            },
             health: Health {
                 health: size / 2.0,
                 max: size / 2.0,
@@ -660,42 +670,78 @@ fn cull_bullets(
 struct CollisionEvent {
     entities: [Entity; 2],
     damage: [Option<Damage>; 2],
-    // Potentially useful in the future: direction vector with magnitude of overlap, knockback stats, weather it needs to be resolved
+    direction: Vec2, // this may not be useful as much anymore but Ill leave it for now
+                     // maybe add knockback stats
+}
+
+#[derive(Default, PartialEq)]
+enum CollisionResolutionStrat {
+    Prevent,
+    NoYield,
+    #[default]
+    Yield,
 }
 
 fn check_collisions(
     mut events: EventWriter<CollisionEvent>,
-    query: Query<(
+    mut query: Query<(
         Entity,
         &CollisionConfig,
-        &Transform,
+        &mut Transform,
         Option<&Affiliation>,
         Option<&Damage>,
     )>,
 ) {
-    // TODO: this might be easier if affiliations were their own components instead of an enum
-    for [entity1, entity2] in query.iter_combinations() {
+    // TODO: this might be easier if affiliations were their own components instead of an enum - past me
+    // not sure why... - later me
+    // This needs to be a let and while instead of a for loop or compiler gets sad???
+    let mut iter = query.iter_combinations_mut();
+    while let Some([mut entity1, mut entity2]) = iter.fetch_next() {
         // TODO Make this more readable
         // In the case that the entities are of the same affiliation, don't even check
         if entity1.3.is_some() && entity1.3 == entity2.3 {
             continue;
         }
+        let radius_sum = entity1.1.radius + entity2.1.radius;
         if entity1
             .2
             .translation
             .xy()
             .distance_squared(entity2.2.translation.xy())
-            < (entity1.1.radius + entity2.1.radius).powi(2)
+            < (radius_sum).powi(2)
         {
+            let mut direction = (radius_sum
+                - entity1
+                    .2
+                    .translation
+                    .xy()
+                    .distance(entity2.2.translation.xy()))
+                * (entity2.2.translation.xy() - entity1.2.translation.xy()).normalize();
             // Collision detected
             events.send(CollisionEvent {
                 entities: [entity1.0, entity2.0],
                 damage: [entity1.4.cloned(), entity2.4.cloned()],
+                direction: direction,
             });
-            println!(
-                "Collision between entity {:?} and entity {:?}.",
-                entity1.0, entity2.0
-            );
+            // Resolve the collision
+            if entity1.1.collision_resolution == CollisionResolutionStrat::Prevent
+                || entity2.1.collision_resolution == CollisionResolutionStrat::Prevent
+            {
+                continue;
+            }
+            let resolve_checks = [
+                entity1.1.collision_resolution == CollisionResolutionStrat::Yield,
+                entity2.1.collision_resolution == CollisionResolutionStrat::Yield,
+            ];
+            if resolve_checks[0] && resolve_checks[1] {
+                direction /= 2.0;
+            }
+            if resolve_checks[0] {
+                entity1.2.translation -= direction.extend(0.0);
+            }
+            if resolve_checks[1] {
+                entity2.2.translation += direction.extend(0.0);
+            }
         }
     }
 }
@@ -745,6 +791,7 @@ fn break_asteroids(
                             commands.spawn(AsteroidBundle {
                                 collision: CollisionConfig {
                                     radius: new_size / 2.0,
+                                    ..Default::default()
                                 },
                                 damage: Damage::Basic(new_size / 3.0),
                                 health: Health {
@@ -780,13 +827,13 @@ fn break_asteroids(
 }
 
 fn hurt_player(
-    mut query: Query<(Entity, &mut Health), With<Player>>,
+    mut query: Query<(Entity, &mut Health, &mut Velocity), With<Player>>,
     mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
 ) {
     for collision in collisions.read() {
         for i in 0..=1 {
-            if let Ok((entity, mut health)) = query.get_mut(collision.entities[i]) {
+            if let Ok((entity, mut health, mut velocity)) = query.get_mut(collision.entities[i]) {
                 // Player collision
                 // TODO collision resolution
 
