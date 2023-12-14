@@ -206,6 +206,7 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ..Default::default()
         },
         damage: Damage::Basic(50.0),
+        knockback: Knockback(10.0),
     });
 }
 
@@ -226,6 +227,7 @@ struct PlayerBundle {
     affiliation: Affiliation,
     collision: CollisionConfig,
     damage: Damage,
+    knockback: Knockback,
 }
 
 #[derive(Component)]
@@ -313,6 +315,7 @@ fn player_controller(
             },
             Bullet,
             Wrappable,
+            Knockback(5.0),
         ));
         commands.spawn(AudioBundle {
             source: assets.load("shoot1.wav"),
@@ -418,6 +421,7 @@ struct AsteroidBundle {
     asteroid: Asteroid,
     affiliation: Affiliation,
     damage: Damage,
+    knockback: Knockback,
 }
 
 fn spawn_asteroids(
@@ -460,6 +464,7 @@ fn spawn_asteroids(
                 rotation_speed: rng.gen_range(-100.0 / size..100.0 / size),
             },
             damage: Damage::Basic(size / 3.0),
+            knockback: Knockback(size * 2.0),
             ..Default::default()
         });
     }
@@ -667,11 +672,13 @@ fn cull_bullets(
 }
 
 #[derive(Event)]
+///  Represents the 2 entities involved in a collision
 struct CollisionEvent {
     entities: [Entity; 2],
     damage: [Option<Damage>; 2],
-    direction: Vec2, // this may not be useful as much anymore but Ill leave it for now
-                     // maybe add knockback stats
+    /// Normalized  direction from entity 1 to 2
+    direction: Vec2,
+    knockback: [f32; 2],
 }
 
 #[derive(Default, PartialEq)]
@@ -682,6 +689,10 @@ enum CollisionResolutionStrat {
     Yield,
 }
 
+// Maybe this should be part of collision configs.
+#[derive(Component, Default)]
+struct Knockback(f32);
+
 fn check_collisions(
     mut events: EventWriter<CollisionEvent>,
     mut query: Query<(
@@ -690,6 +701,7 @@ fn check_collisions(
         &mut Transform,
         Option<&Affiliation>,
         Option<&Damage>,
+        Option<&Knockback>,
     )>,
 ) {
     // TODO: this might be easier if affiliations were their own components instead of an enum - past me
@@ -710,18 +722,23 @@ fn check_collisions(
             .distance_squared(entity2.2.translation.xy())
             < (radius_sum).powi(2)
         {
-            let mut direction = (radius_sum
+            let direction = (entity2.2.translation.xy() - entity1.2.translation.xy()).normalize();
+            let mut difference = (radius_sum
                 - entity1
                     .2
                     .translation
                     .xy()
                     .distance(entity2.2.translation.xy()))
-                * (entity2.2.translation.xy() - entity1.2.translation.xy()).normalize();
+                * direction;
             // Collision detected
             events.send(CollisionEvent {
                 entities: [entity1.0, entity2.0],
                 damage: [entity1.4.cloned(), entity2.4.cloned()],
                 direction: direction,
+                knockback: [
+                    entity1.5.unwrap_or(&Knockback(0.0)).0,
+                    entity2.5.unwrap_or(&Knockback(0.0)).0,
+                ],
             });
             // Resolve the collision
             if entity1.1.collision_resolution == CollisionResolutionStrat::Prevent
@@ -734,20 +751,20 @@ fn check_collisions(
                 entity2.1.collision_resolution == CollisionResolutionStrat::Yield,
             ];
             if resolve_checks[0] && resolve_checks[1] {
-                direction /= 2.0;
+                difference /= 2.0;
             }
             if resolve_checks[0] {
-                entity1.2.translation -= direction.extend(0.0);
+                entity1.2.translation -= difference.extend(0.0);
             }
             if resolve_checks[1] {
-                entity2.2.translation += direction.extend(0.0);
+                entity2.2.translation += difference.extend(0.0);
             }
         }
     }
 }
 
 fn break_asteroids(
-    mut query: Query<(Entity, &mut Health, &Transform), With<Asteroid>>,
+    mut query: Query<(Entity, &mut Health, &Transform, &mut Velocity), With<Asteroid>>,
     mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
     mut rng: ResMut<GlobalEntropy<WyRand>>,
@@ -756,9 +773,10 @@ fn break_asteroids(
     // TODO rewrite cull_bullets in this way maybe. This is also kinda gross tho
     for collision in collisions.read() {
         for i in 0..=1 {
-            if let Ok((entity, mut health, transform)) = query.get_mut(collision.entities[i]) {
+            if let Ok((entity, mut health, transform, mut velocity)) =
+                query.get_mut(collision.entities[i])
+            {
                 // Asteroid collision
-                // TODO collision resolution
 
                 if let Some(damage) = &collision.damage[i.abs_diff(1)] {
                     match damage {
@@ -816,11 +834,17 @@ fn break_asteroids(
                                     rotation_speed: rng
                                         .gen_range(-100.0 / new_size..100.0 / new_size),
                                 },
+                                knockback: Knockback(size * 2.0),
                                 ..Default::default()
                             });
                         }
                     }
                 }
+                // Knockback
+                velocity.translation_speed += collision.direction.extend(0.0)
+                    * collision.knockback[i.abs_diff(1)]
+                    // Negate if index 0
+                    * (1.0 + (-2.0 * i.abs_diff(1) as f32));
             }
         }
     }
@@ -835,8 +859,6 @@ fn hurt_player(
         for i in 0..=1 {
             if let Ok((entity, mut health, mut velocity)) = query.get_mut(collision.entities[i]) {
                 // Player collision
-                // TODO collision resolution
-
                 if let Some(damage) = &collision.damage[i.abs_diff(1)] {
                     match damage {
                         Damage::Basic(dmg) => {
@@ -851,6 +873,12 @@ fn hurt_player(
                         commands.entity(entity).despawn();
                     }
                 }
+                // Knockback, later considerations might include knockback resistance or inversion
+                velocity.translation_speed += collision.direction.extend(0.0)
+                    * collision.knockback[i.abs_diff(1)]
+                    // Negate if index 0
+                    * (1.0 + (-2.0 * i.abs_diff(1) as f32));
+
                 // Since there should only be one player, this skips checking the other
                 // collision entity if the first one is the player
                 break;
