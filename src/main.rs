@@ -33,12 +33,6 @@ fn main() {
     // TODO: Only on devcade
     game.add_systems(Update, devcaders::close_on_menu_buttons);
 
-    // For testing to see what i can check for to evaluate devcade presence
-    println!("Environment vars:");
-    for var in env::vars() {
-        println!("{}: {}", var.0, var.1);
-    }
-
     game.run();
 }
 
@@ -270,11 +264,11 @@ fn player_controller(
     right_control = right_control
         || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickRight)
         || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickRight);
-    let mut shoot_control = keyboard.pressed(KeyCode::Space);
+    let mut shoot_control = keyboard.just_pressed(KeyCode::Space);
     // TODO: only on devcade
     shoot_control = shoot_control
-        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::A1)
-        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::A1);
+        || devcade_controls.just_pressed(devcaders::Player::P1, devcaders::Button::A1)
+        || devcade_controls.just_pressed(devcaders::Player::P2, devcaders::Button::A1);
 
     if forward_control {
         player_velocity.translation_speed += forward * 1000.0 * time.delta_seconds();
