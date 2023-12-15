@@ -46,6 +46,7 @@ fn main() {
     .add_systems(Update, wrap.after(movement))
     .add_systems(Update, tick_lifetime)
     .add_systems(Update, update_player_ui)
+    .add_systems(Update, fade_tutorials)
     .add_systems(
         Update,
         (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
@@ -1034,6 +1035,9 @@ fn setup_tutorials(
     commands // Root of tutorial
         .spawn((
             TutorialRoot,
+            Lifetime {
+                time: Timer::from_seconds(20.0, TimerMode::Once),
+            },
             NodeBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
@@ -1065,6 +1069,9 @@ fn setup_tutorials(
                         ..Default::default()
                     },
                     TutorialBackground,
+                    Lifetime {
+                        time: Timer::from_seconds(20.0, TimerMode::Once),
+                    },
                 ))
                 .with_children(|parent| {
                     parent // Row
@@ -1079,6 +1086,9 @@ fn setup_tutorials(
                         .with_children(|parent| {
                             parent.spawn((
                                 Tutorial,
+                                Lifetime {
+                                    time: Timer::from_seconds(20.0, TimerMode::Once),
+                                },
                                 ImageBundle {
                                     image: UiImage::new(assets.load("rotate_icon_100.png")),
                                     style: Style {
@@ -1090,6 +1100,9 @@ fn setup_tutorials(
                             ));
                             parent.spawn((
                                 Tutorial,
+                                Lifetime {
+                                    time: Timer::from_seconds(20.0, TimerMode::Once),
+                                },
                                 Animatable {
                                     current_frame: 0,
                                     frames: AnimationFrames::FrameList(vec![2, 4, 14, 16]),
@@ -1122,6 +1135,9 @@ fn setup_tutorials(
                         .with_children(|parent| {
                             parent.spawn((
                                 Tutorial,
+                                Lifetime {
+                                    time: Timer::from_seconds(20.0, TimerMode::Once),
+                                },
                                 ImageBundle {
                                     image: UiImage::new(assets.load("shoot_icon_100.png")),
                                     style: Style {
@@ -1133,6 +1149,9 @@ fn setup_tutorials(
                             ));
                             parent.spawn((
                                 Tutorial,
+                                Lifetime {
+                                    time: Timer::from_seconds(20.0, TimerMode::Once),
+                                },
                                 Animatable {
                                     current_frame: 0,
                                     frames: AnimationFrames::Offset { start: 5, step: 12 },
@@ -1165,6 +1184,9 @@ fn setup_tutorials(
                         .with_children(|parent| {
                             parent.spawn((
                                 Tutorial,
+                                Lifetime {
+                                    time: Timer::from_seconds(20.0, TimerMode::Once),
+                                },
                                 ImageBundle {
                                     image: UiImage::new(assets.load("exit.png")),
                                     style: Style {
@@ -1177,6 +1199,9 @@ fn setup_tutorials(
                             parent.spawn(NodeBundle::default()).with_children(|parent| {
                                 parent.spawn((
                                     Tutorial,
+                                    Lifetime {
+                                        time: Timer::from_seconds(20.0, TimerMode::Once),
+                                    },
                                     Animatable {
                                         current_frame: 0,
                                         frames: AnimationFrames::Offset { start: 9, step: 12 },
@@ -1197,6 +1222,9 @@ fn setup_tutorials(
                                 ));
                                 parent.spawn((
                                     Tutorial,
+                                    Lifetime {
+                                        time: Timer::from_seconds(20.0, TimerMode::Once),
+                                    },
                                     Animatable {
                                         current_frame: 0,
                                         frames: AnimationFrames::Offset { start: 9, step: 12 },
@@ -1230,6 +1258,9 @@ fn setup_tutorials(
                         .with_children(|parent| {
                             parent.spawn((
                                 Tutorial,
+                                Lifetime {
+                                    time: Timer::from_seconds(20.0, TimerMode::Once),
+                                },
                                 ImageBundle {
                                     image: UiImage::new(assets.load("thrust_icon_100.png")),
                                     style: Style {
@@ -1241,6 +1272,9 @@ fn setup_tutorials(
                             ));
                             parent.spawn((
                                 Tutorial,
+                                Lifetime {
+                                    time: Timer::from_seconds(20.0, TimerMode::Once),
+                                },
                                 Animatable {
                                     current_frame: 0,
                                     frames: AnimationFrames::FrameList(vec![0, 1, 12, 13]),
@@ -1262,4 +1296,29 @@ fn setup_tutorials(
                         });
                 });
         });
+}
+
+fn animate() {}
+
+fn fade_tutorials(
+    mut commands: Commands,
+    mut tutorials: Query<(&Lifetime, &mut BackgroundColor), (With<Tutorial>, Without<TutorialBackground>)>,
+    mut tutorial_roots: Query<(Entity, &Lifetime), With<TutorialRoot>>,
+    mut tutorial_backgrounds: Query<(&Lifetime, &mut BackgroundColor), With<TutorialBackground>>,
+) {
+    for (lifetime, mut background) in tutorials.iter_mut() {
+        background
+            .0
+            .set_a(lifetime.time.remaining_secs().min(10.0) / 10.0);
+    }
+    for (lifetime, mut background) in tutorial_backgrounds.iter_mut() {
+        background
+            .0
+            .set_a(lifetime.time.remaining_secs().min(10.0) / 20.0);
+    }
+    for (entity, lifetime) in tutorial_roots.iter_mut() {
+        if lifetime.time.finished() {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
 }
