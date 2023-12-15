@@ -37,6 +37,7 @@ fn main() {
     .add_event::<CollisionEvent>()
     .add_systems(Startup, (spawn_core, spawn_asteroids))
     .add_systems(Startup, (setup_fps_counter, setup_ui))
+    .add_systems(Startup, setup_tutorials)
     .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
     .add_systems(Update, player_controller.before(movement))
     .add_systems(Update, movement)
@@ -996,4 +997,269 @@ fn update_player_ui(
     let stats = player_stats.single();
     health_back.single_mut().width = Val::Px(stats.max);
     health_front.single_mut().width = Val::Px(stats.health);
+}
+#[derive(Resource)]
+struct UiAnimationTimer(Timer);
+#[derive(Component)]
+struct Tutorial;
+#[derive(Component)]
+struct TutorialRoot;
+#[derive(Component)]
+struct TutorialBackground;
+#[derive(Component)]
+struct Animatable {
+    max_frame: u32,
+    current_frame: u32,
+    frames: AnimationFrames,
+}
+enum AnimationFrames {
+    Offset { start: u32, step: u32 },
+    FrameList(Vec<u32>),
+}
+
+fn setup_tutorials(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    devcade: Option<Res<Devcade>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
+    let controls_atlas = texture_atlases.add(TextureAtlas::from_grid(
+        assets.load("controls_tilemap.png"),
+        Vec2::splat(16.0),
+        12,
+        2,
+        None,
+        None,
+    ));
+    commands // Root of tutorial
+        .spawn((
+            TutorialRoot,
+            NodeBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    left: Val::Percent(1.0),
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Column,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+        ))
+        .with_children(|parent| {
+            parent // Background
+                .spawn((
+                    NodeBundle {
+                        background_color: BackgroundColor(Color::Rgba {
+                            red: 0.0,
+                            green: 0.0,
+                            blue: 0.0,
+                            alpha: 0.5,
+                        }),
+                        style: Style {
+                            padding: UiRect::all(Val::Vw(1.0)),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(20.0),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
+                    TutorialBackground,
+                ))
+                .with_children(|parent| {
+                    parent // Row
+                        .spawn(NodeBundle {
+                            style: Style {
+                                column_gap: Val::Px(50.0),
+                                justify_content: JustifyContent::SpaceBetween, // Remove these to get rid of right aligned controls
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Tutorial,
+                                ImageBundle {
+                                    image: UiImage::new(assets.load("rotate_icon_100.png")),
+                                    style: Style {
+                                        width: Val::Px(70.0),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                },
+                            ));
+                            parent.spawn((
+                                Tutorial,
+                                Animatable {
+                                    current_frame: 0,
+                                    frames: AnimationFrames::FrameList(vec![2, 4, 14, 16]),
+                                    max_frame: 3,
+                                },
+                                AtlasImageBundle {
+                                    texture_atlas: controls_atlas.clone(),
+                                    texture_atlas_image: UiTextureAtlasImage {
+                                        index: 2,
+                                        ..Default::default()
+                                    },
+                                    style: Style {
+                                        width: Val::Px(70.0),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                },
+                            ));
+                        });
+
+                    parent // Row
+                        .spawn(NodeBundle {
+                            style: Style {
+                                column_gap: Val::Px(50.0),
+                                justify_content: JustifyContent::SpaceBetween,
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Tutorial,
+                                ImageBundle {
+                                    image: UiImage::new(assets.load("shoot_icon_100.png")),
+                                    style: Style {
+                                        width: Val::Px(70.0),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                },
+                            ));
+                            parent.spawn((
+                                Tutorial,
+                                Animatable {
+                                    current_frame: 0,
+                                    frames: AnimationFrames::Offset { start: 5, step: 12 },
+                                    max_frame: 1,
+                                },
+                                AtlasImageBundle {
+                                    texture_atlas: controls_atlas.clone(),
+                                    texture_atlas_image: UiTextureAtlasImage {
+                                        index: 5,
+                                        ..Default::default()
+                                    },
+                                    style: Style {
+                                        width: Val::Px(70.0),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                },
+                            ));
+                        });
+
+                    parent // Row
+                        .spawn(NodeBundle {
+                            style: Style {
+                                column_gap: Val::Px(50.0),
+                                justify_content: JustifyContent::SpaceBetween,
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Tutorial,
+                                ImageBundle {
+                                    image: UiImage::new(assets.load("exit.png")),
+                                    style: Style {
+                                        width: Val::Px(70.0),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                },
+                            ));
+                            parent.spawn(NodeBundle::default()).with_children(|parent| {
+                                parent.spawn((
+                                    Tutorial,
+                                    Animatable {
+                                        current_frame: 0,
+                                        frames: AnimationFrames::Offset { start: 9, step: 12 },
+                                        max_frame: 1,
+                                    },
+                                    AtlasImageBundle {
+                                        texture_atlas: controls_atlas.clone(),
+                                        texture_atlas_image: UiTextureAtlasImage {
+                                            index: 9,
+                                            ..Default::default()
+                                        },
+                                        style: Style {
+                                            width: Val::Px(70.0),
+                                            ..Default::default()
+                                        },
+                                        ..Default::default()
+                                    },
+                                ));
+                                parent.spawn((
+                                    Tutorial,
+                                    Animatable {
+                                        current_frame: 0,
+                                        frames: AnimationFrames::Offset { start: 9, step: 12 },
+                                        max_frame: 1,
+                                    },
+                                    AtlasImageBundle {
+                                        texture_atlas: controls_atlas.clone(),
+                                        texture_atlas_image: UiTextureAtlasImage {
+                                            index: 9,
+                                            ..Default::default()
+                                        },
+                                        style: Style {
+                                            width: Val::Px(70.0),
+                                            ..Default::default()
+                                        },
+                                        ..Default::default()
+                                    },
+                                ));
+                            });
+                        });
+
+                    parent // Row
+                        .spawn(NodeBundle {
+                            style: Style {
+                                column_gap: Val::Px(50.0),
+                                justify_content: JustifyContent::SpaceBetween, // Remove these to get rid of right aligned controls
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Tutorial,
+                                ImageBundle {
+                                    image: UiImage::new(assets.load("thrust_icon_100.png")),
+                                    style: Style {
+                                        width: Val::Px(70.0),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                },
+                            ));
+                            parent.spawn((
+                                Tutorial,
+                                Animatable {
+                                    current_frame: 0,
+                                    frames: AnimationFrames::FrameList(vec![0, 1, 12, 13]),
+                                    max_frame: 3,
+                                },
+                                AtlasImageBundle {
+                                    texture_atlas: controls_atlas.clone(),
+                                    texture_atlas_image: UiTextureAtlasImage {
+                                        index: 0,
+                                        ..Default::default()
+                                    },
+                                    style: Style {
+                                        width: Val::Px(70.0),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                },
+                            ));
+                        });
+                });
+        });
 }
