@@ -2,6 +2,7 @@ use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
+use bevy::window::{Cursor, PresentMode, WindowMode};
 use bevy_rand::prelude::*;
 use devcaders;
 use rand::Rng;
@@ -9,32 +10,58 @@ use std::env;
 use std::f32::consts::PI;
 
 fn main() {
-    let mut game = App::new();
-    game.add_plugins(DefaultPlugins) // TODO: Look through defaults and disable things I don't need.
-        .add_plugins(EntropyPlugin::<WyRand>::default())
-        .add_plugins(FrameTimeDiagnosticsPlugin)
-        .add_event::<CollisionEvent>()
-        .add_systems(Startup, (spawn_core, spawn_asteroids))
-        .add_systems(Startup, (setup_fps_counter, setup_ui))
-        .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
-        .add_systems(Update, player_controller.before(movement))
-        .add_systems(Update, movement)
-        .add_systems(Update, apply_drag)
-        .add_systems(Update, (camera_controller, check_collisions).after(wrap))
-        .add_systems(Update, wrap.after(movement))
-        .add_systems(Update, tick_lifetime)
-        .add_systems(Update, update_player_ui)
-        .add_systems(
-            Update,
-            (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
-        )
-        .add_systems(Update, bevy::window::close_on_esc);
+    let devcade: bool = env::var_os("DEVCADE_PATH").is_some();
 
-    // TODO: Only on devcade
-    game.add_systems(Update, devcaders::close_on_menu_buttons);
+    let mut game = App::new();
+
+    // TODO: Look through defaults and disable things I don't need.
+    game.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            cursor: Cursor {
+                visible: false, // TODO: change this once mouse control is added
+                ..Default::default()
+            },
+            mode: if devcade {
+                WindowMode::BorderlessFullscreen
+            } else {
+                WindowMode::Windowed
+            },
+            title: "Void Break".into(),
+            decorations: false,
+            ..Default::default()
+        }),
+        ..Default::default()
+    }))
+    .add_plugins(EntropyPlugin::<WyRand>::default())
+    .add_plugins(FrameTimeDiagnosticsPlugin)
+    .add_event::<CollisionEvent>()
+    .add_systems(Startup, (spawn_core, spawn_asteroids))
+    .add_systems(Startup, (setup_fps_counter, setup_ui))
+    .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
+    .add_systems(Update, player_controller.before(movement))
+    .add_systems(Update, movement)
+    .add_systems(Update, apply_drag)
+    .add_systems(Update, (camera_controller, check_collisions).after(wrap))
+    .add_systems(Update, wrap.after(movement))
+    .add_systems(Update, tick_lifetime)
+    .add_systems(Update, update_player_ui)
+    .add_systems(
+        Update,
+        (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
+    )
+    .add_systems(Update, bevy::window::close_on_esc);
+
+    if devcade {
+        println!("Void Break: Detected DEVCADE_PATH, Devcade specifics enabled");
+        game.insert_resource(Devcade)
+            .add_systems(Update, devcaders::close_on_menu_buttons);
+    }
 
     game.run();
 }
+
+#[derive(Resource)]
+struct Devcade;
 
 /// Spawn the core components needed for basic game function: Background, Player, and Camera
 fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
@@ -242,6 +269,7 @@ fn player_controller(
     mut commands: Commands,
     assets: Res<AssetServer>,
     devcade_controls: devcaders::DevcadeControls,
+    devcade: Option<Res<Devcade>>,
 ) {
     // If there are ever more than one player, something has gone very wrong
     let (mut player_velocity, player_transform) = query.single_mut();
@@ -250,30 +278,35 @@ fn player_controller(
     // Once a more configurable input system is set up,
     // TODO set devcade controls there instead of adding them to conditionals
     let mut forward_control = keyboard.pressed(KeyCode::W);
-    // TODO: only on devcade
-    forward_control = forward_control
-        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickUp)
-        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickUp);
+    if devcade.is_some() {
+        forward_control = forward_control
+            || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickUp)
+            || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickUp);
+    }
     let mut back_control = keyboard.pressed(KeyCode::S);
-    // TODO: only on devcade
-    back_control = back_control
-        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickDown)
-        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickDown);
+    if devcade.is_some() {
+        back_control = back_control
+            || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickDown)
+            || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickDown);
+    }
     let mut left_control = keyboard.pressed(KeyCode::A);
-    // TODO: only on devcade
-    left_control = left_control
-        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickLeft)
-        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickLeft);
+    if devcade.is_some() {
+        left_control = left_control
+            || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickLeft)
+            || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickLeft);
+    }
     let mut right_control = keyboard.pressed(KeyCode::D);
-    // TODO: only on devcade
-    right_control = right_control
-        || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickRight)
-        || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickRight);
+    if devcade.is_some() {
+        right_control = right_control
+            || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickRight)
+            || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickRight);
+    }
     let mut shoot_control = keyboard.just_pressed(KeyCode::Space);
-    // TODO: only on devcade
-    shoot_control = shoot_control
-        || devcade_controls.just_pressed(devcaders::Player::P1, devcaders::Button::A1)
-        || devcade_controls.just_pressed(devcaders::Player::P2, devcaders::Button::A1);
+    if devcade.is_some() {
+        shoot_control = shoot_control
+            || devcade_controls.just_pressed(devcaders::Player::P1, devcaders::Button::A1)
+            || devcade_controls.just_pressed(devcaders::Player::P2, devcaders::Button::A1);
+    }
 
     if forward_control {
         player_velocity.translation_speed += forward * 1000.0 * time.delta_seconds();
