@@ -28,6 +28,7 @@ fn main() {
             },
             title: "Void Break".into(),
             decorations: false,
+            present_mode: PresentMode::AutoVsync,
             ..Default::default()
         }),
         ..Default::default()
@@ -46,12 +47,16 @@ fn main() {
     .add_systems(Update, wrap.after(movement))
     .add_systems(Update, tick_lifetime)
     .add_systems(Update, update_player_ui)
-    .add_systems(Update, fade_tutorials)
+    .add_systems(Update, (fade_tutorials, animate))
     .add_systems(
         Update,
         (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
     )
-    .add_systems(Update, bevy::window::close_on_esc);
+    .add_systems(Update, bevy::window::close_on_esc)
+    .insert_resource(UiAnimationTimer(Timer::from_seconds(
+        0.5,
+        TimerMode::Repeating,
+    )));
 
     if devcade {
         println!("Void Break: Detected DEVCADE_PATH, Devcade specifics enabled");
@@ -1009,13 +1014,13 @@ struct TutorialRoot;
 struct TutorialBackground;
 #[derive(Component)]
 struct Animatable {
-    max_frame: u32,
-    current_frame: u32,
+    max_frame: usize,
+    current_frame: usize,
     frames: AnimationFrames,
 }
 enum AnimationFrames {
-    Offset { start: u32, step: u32 },
-    FrameList(Vec<u32>),
+    Offset { start: usize, step: usize },
+    FrameList(Vec<usize>),
 }
 
 fn setup_tutorials(
@@ -1298,11 +1303,38 @@ fn setup_tutorials(
         });
 }
 
-fn animate() {}
+fn animate(
+    mut ui_animation_timer: ResMut<UiAnimationTimer>,
+    mut animations: Query<(&mut Animatable, Option<&mut UiTextureAtlasImage>)>,
+    time: Res<Time>,
+) {
+    ui_animation_timer.0.tick(time.delta());
+    if ui_animation_timer.0.just_finished() {
+        for (mut animation, ui_index) in animations.iter_mut() {
+            if animation.current_frame == animation.max_frame {
+                animation.current_frame = 0;
+            } else {
+                animation.current_frame += 1;
+            }
+
+            if let Some(mut index) = ui_index {
+                index.index = match &animation.frames {
+                    AnimationFrames::FrameList(frames) => frames[animation.current_frame],
+                    AnimationFrames::Offset { start, step } => {
+                        start + step * animation.current_frame
+                    }
+                }
+            }
+        }
+    }
+}
 
 fn fade_tutorials(
     mut commands: Commands,
-    mut tutorials: Query<(&Lifetime, &mut BackgroundColor), (With<Tutorial>, Without<TutorialBackground>)>,
+    mut tutorials: Query<
+        (&Lifetime, &mut BackgroundColor),
+        (With<Tutorial>, Without<TutorialBackground>),
+    >,
     mut tutorial_roots: Query<(Entity, &Lifetime), With<TutorialRoot>>,
     mut tutorial_backgrounds: Query<(&Lifetime, &mut BackgroundColor), With<TutorialBackground>>,
 ) {
