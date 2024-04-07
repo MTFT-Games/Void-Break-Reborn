@@ -1,5 +1,6 @@
 use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
+use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 use bevy::window::{Cursor, PresentMode, WindowMode};
@@ -8,6 +9,13 @@ use devcaders;
 use rand::Rng;
 use std::env;
 use std::f32::consts::PI;
+
+#[derive(States, Default, Debug, Hash, PartialEq, Eq, Clone, Copy)]
+enum GameState {
+    #[default]
+    Play,
+    Paused,
+}
 
 fn main() {
     let devcade: bool = env::var_os("DEVCADE_PATH").is_some();
@@ -35,24 +43,42 @@ fn main() {
     }))
     .add_plugins(EntropyPlugin::<WyRand>::default())
     .add_plugins(FrameTimeDiagnosticsPlugin)
+    .add_state::<GameState>()
     .add_event::<CollisionEvent>()
     .add_systems(Startup, (spawn_core, spawn_asteroids))
     .add_systems(Startup, (setup_fps_counter, setup_ui))
     .add_systems(Startup, setup_tutorials)
     .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
-    .add_systems(Update, player_controller.before(movement))
-    .add_systems(Update, movement)
-    .add_systems(Update, apply_drag)
-    .add_systems(Update, (camera_controller, check_collisions).after(wrap))
-    .add_systems(Update, wrap.after(movement))
-    .add_systems(Update, tick_lifetime)
+    .add_systems(
+        Update,
+        player_controller
+            .before(movement)
+            .run_if(in_state(GameState::Play)),
+    )
+    .add_systems(Update, movement.run_if(in_state(GameState::Play)))
+    .add_systems(Update, apply_drag.run_if(in_state(GameState::Play)))
+    .add_systems(
+        Update,
+        (camera_controller, check_collisions)
+            .after(wrap)
+            .run_if(in_state(GameState::Play)),
+    )
+    .add_systems(
+        Update,
+        wrap.after(movement).run_if(in_state(GameState::Play)),
+    )
+    .add_systems(Update, tick_lifetime.run_if(in_state(GameState::Play)))
     .add_systems(Update, update_player_ui)
-    .add_systems(Update, (fade_tutorials, animate))
+    .add_systems(
+        Update,
+        (fade_tutorials, animate).run_if(in_state(GameState::Play)),
+    )
     .add_systems(
         Update,
         (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
     )
     .add_systems(Update, bevy::window::close_on_esc)
+    .add_systems(Update, toggle_pause.run_if(input_just_pressed(KeyCode::P)))
     .insert_resource(UiAnimationTimer(Timer::from_seconds(
         0.5,
         TimerMode::Repeating,
@@ -69,6 +95,13 @@ fn main() {
 
 #[derive(Resource)]
 struct Devcade;
+
+fn toggle_pause(mut next_state: ResMut<NextState<GameState>>, state: Res<State<GameState>>) {
+    match state.get() {
+        GameState::Paused => next_state.set(GameState::Play),
+        GameState::Play => next_state.set(GameState::Paused),
+    }
+}
 
 /// Spawn the core components needed for basic game function: Background, Player, and Camera
 fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
