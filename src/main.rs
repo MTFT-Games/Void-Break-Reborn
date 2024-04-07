@@ -79,6 +79,7 @@ fn main() {
     )
     .add_systems(Update, bevy::window::close_on_esc)
     .add_systems(Update, toggle_pause.run_if(input_just_pressed(KeyCode::P)))
+    .add_systems(Update, draw_hitboxes.run_if(in_state(GameState::Paused)))
     .insert_resource(UiAnimationTimer(Timer::from_seconds(
         0.5,
         TimerMode::Repeating,
@@ -833,6 +834,12 @@ fn check_collisions(
                 entity2.2.translation += difference.extend(0.0);
             }
         }
+    }
+}
+
+fn draw_hitboxes(mut gizmos: Gizmos, query: Query<(&Transform, &CollisionConfig)>) {
+    for hitbox in query.iter() {
+        gizmos.circle_2d(hitbox.0.translation.xy(), hitbox.1.radius, Color::BLUE);
     }
 }
 
