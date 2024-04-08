@@ -478,7 +478,7 @@ struct Health {
     max: f32,
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug)]
 struct CollisionConfig {
     // This could eb an enum maybe for different types of collision boxes maybe. or contain one along with other info
     radius: f32,
@@ -519,8 +519,8 @@ fn spawn_asteroids(
             sprite_bundle: SpriteBundle {
                 texture: assets.load("basic_asteroid_100.png"),
                 transform: Transform::from_xyz(
-                    rng.gen_range(-1000.0..1000.0),
-                    rng.gen_range(-1000.0..1000.0),
+                    rng.gen_range(-500.0..500.0), // TODO: set this from background
+                    rng.gen_range(-500.0..500.0),
                     0.0,
                 ),
                 sprite: Sprite {
@@ -671,7 +671,7 @@ fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<I
     }
 }
 
-#[derive(Component, PartialEq, Default)]
+#[derive(Component, PartialEq, Default, Debug)]
 enum Affiliation {
     // should this just be part of collision config?
     Friendly,
@@ -683,7 +683,7 @@ enum Affiliation {
 #[derive(Component)]
 struct Projectile;
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 enum Damage {
     // should this just be part of collision config?
     Basic(f32),
@@ -755,7 +755,7 @@ struct CollisionEvent {
     knockback: [f32; 2],
 }
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Debug)]
 enum CollisionResolutionStrat {
     Prevent,
     NoYield,
@@ -764,7 +764,7 @@ enum CollisionResolutionStrat {
 }
 
 // Maybe this should be part of collision configs.
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug)]
 struct Knockback(f32);
 
 fn check_collisions(
