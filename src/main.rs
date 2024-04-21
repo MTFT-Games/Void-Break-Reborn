@@ -16,6 +16,11 @@ enum GameState {
     Paused,
 }
 
+struct DebugSettings {
+    draw_hitboxes: bool,
+    draw_world_borders: bool,
+}
+
 fn main() {
     let devcade: bool = env::var_os("DEVCADE_PATH").is_some();
 
