@@ -1,4 +1,3 @@
-use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
@@ -43,7 +42,7 @@ fn main() {
     }))
     .add_plugins(EntropyPlugin::<WyRand>::default())
     .add_plugins(FrameTimeDiagnosticsPlugin)
-    .add_state::<GameState>()
+    .init_state::<GameState>()
     .add_event::<CollisionEvent>()
     .add_systems(Startup, (spawn_core, spawn_asteroids))
     .add_systems(Startup, (setup_fps_counter, setup_ui))
@@ -137,10 +136,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
                     transform: Transform::from_xyz(-1024.0, -1024.0, 0.0),
                     camera: Camera {
                         order: 1,
-                        ..Default::default()
-                    },
-                    camera_2d: Camera2d {
                         clear_color: ClearColorConfig::None,
+                        ..Default::default()
                     },
                     ..Default::default()
                 },
@@ -152,10 +149,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
                     transform: Transform::from_xyz(0.0, -1024.0, 0.0),
                     camera: Camera {
                         order: 2,
-                        ..Default::default()
-                    },
-                    camera_2d: Camera2d {
                         clear_color: ClearColorConfig::None,
+                        ..Default::default()
                     },
                     ..Default::default()
                 },
@@ -167,10 +162,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
                     transform: Transform::from_xyz(1024.0, -1024.0, 0.0),
                     camera: Camera {
                         order: 3,
-                        ..Default::default()
-                    },
-                    camera_2d: Camera2d {
                         clear_color: ClearColorConfig::None,
+                        ..Default::default()
                     },
                     ..Default::default()
                 },
@@ -182,10 +175,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
                     transform: Transform::from_xyz(-1024.0, 1024.0, 0.0),
                     camera: Camera {
                         order: 4,
-                        ..Default::default()
-                    },
-                    camera_2d: Camera2d {
                         clear_color: ClearColorConfig::None,
+                        ..Default::default()
                     },
                     ..Default::default()
                 },
@@ -197,10 +188,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
                     transform: Transform::from_xyz(0.0, 1024.0, 0.0),
                     camera: Camera {
                         order: 5,
-                        ..Default::default()
-                    },
-                    camera_2d: Camera2d {
                         clear_color: ClearColorConfig::None,
+                        ..Default::default()
                     },
                     ..Default::default()
                 },
@@ -212,10 +201,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
                     transform: Transform::from_xyz(1024.0, 1024.0, 0.0),
                     camera: Camera {
                         order: 6,
-                        ..Default::default()
-                    },
-                    camera_2d: Camera2d {
                         clear_color: ClearColorConfig::None,
+                        ..Default::default()
                     },
                     ..Default::default()
                 },
@@ -227,10 +214,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
                     transform: Transform::from_xyz(-1024.0, 0.0, 0.0),
                     camera: Camera {
                         order: 7,
-                        ..Default::default()
-                    },
-                    camera_2d: Camera2d {
                         clear_color: ClearColorConfig::None,
+                        ..Default::default()
                     },
                     ..Default::default()
                 },
@@ -242,10 +227,8 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
                     transform: Transform::from_xyz(1024.0, 0.0, 0.0),
                     camera: Camera {
                         order: 8,
-                        ..Default::default()
-                    },
-                    camera_2d: Camera2d {
                         clear_color: ClearColorConfig::None,
+                        ..Default::default()
                     },
                     ..Default::default()
                 },
@@ -305,7 +288,7 @@ struct Player;
 // Todo: Make it all delta time based
 fn player_controller(
     mut query: Query<(&mut Velocity, &Transform), With<Player>>,
-    keyboard: Res<Input<KeyCode>>,
+    keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     mut commands: Commands,
     assets: Res<AssetServer>,
@@ -661,7 +644,7 @@ fn fps_text_update_system(
 }
 
 /// Toggle the FPS counter when pressing F12
-fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<Input<KeyCode>>) {
+fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<ButtonInput<KeyCode>>) {
     if kbd.just_pressed(KeyCode::F12) {
         let mut vis = q.single_mut();
         *vis = match *vis {
@@ -1067,10 +1050,10 @@ fn setup_tutorials(
     mut commands: Commands,
     assets: Res<AssetServer>,
     devcade: Option<Res<Devcade>>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let controls_atlas = texture_atlases.add(TextureAtlas::from_grid(
-        assets.load("controls_tilemap.png"),
+    let texture_sheet = assets.load("controls_tilemap.png");
+    let controls_atlas = texture_atlases.add(TextureAtlasLayout::from_grid(
         Vec2::splat(16.0),
         12,
         2,
@@ -1154,9 +1137,12 @@ fn setup_tutorials(
                                     max_frame: 3,
                                 },
                                 AtlasImageBundle {
-                                    texture_atlas: controls_atlas.clone(),
-                                    texture_atlas_image: UiTextureAtlasImage {
-                                        index: 2,
+                                    texture_atlas: TextureAtlas { 
+                                        layout: controls_atlas, 
+                                        index: 2
+                                    },
+                                    image: UiImage {
+                                        texture: texture_sheet,
                                         ..Default::default()
                                     },
                                     style: Style {
@@ -1203,9 +1189,12 @@ fn setup_tutorials(
                                     max_frame: 1,
                                 },
                                 AtlasImageBundle {
-                                    texture_atlas: controls_atlas.clone(),
-                                    texture_atlas_image: UiTextureAtlasImage {
-                                        index: 5,
+                                    texture_atlas: TextureAtlas { 
+                                        layout: controls_atlas, 
+                                        index: 5 
+                                    },
+                                    image: UiImage {
+                                        texture: texture_sheet,
                                         ..Default::default()
                                     },
                                     style: Style {
@@ -1253,9 +1242,12 @@ fn setup_tutorials(
                                         max_frame: 1,
                                     },
                                     AtlasImageBundle {
-                                        texture_atlas: controls_atlas.clone(),
-                                        texture_atlas_image: UiTextureAtlasImage {
-                                            index: 9,
+                                        texture_atlas: TextureAtlas { 
+                                            layout: controls_atlas, 
+                                            index: 9 
+                                        },
+                                        image: UiImage {
+                                            texture: texture_sheet,
                                             ..Default::default()
                                         },
                                         style: Style {
@@ -1276,9 +1268,12 @@ fn setup_tutorials(
                                         max_frame: 1,
                                     },
                                     AtlasImageBundle {
-                                        texture_atlas: controls_atlas.clone(),
-                                        texture_atlas_image: UiTextureAtlasImage {
-                                            index: 9,
+                                        texture_atlas: TextureAtlas { 
+                                            layout: controls_atlas, 
+                                            index: 9 
+                                        },
+                                        image: UiImage {
+                                            texture: texture_sheet,
                                             ..Default::default()
                                         },
                                         style: Style {
@@ -1326,9 +1321,12 @@ fn setup_tutorials(
                                     max_frame: 3,
                                 },
                                 AtlasImageBundle {
-                                    texture_atlas: controls_atlas.clone(),
-                                    texture_atlas_image: UiTextureAtlasImage {
-                                        index: 0,
+                                    texture_atlas: TextureAtlas { 
+                                        layout: controls_atlas, 
+                                        index: 0 
+                                    },
+                                    image: UiImage {
+                                        texture: texture_sheet,
                                         ..Default::default()
                                     },
                                     style: Style {
@@ -1345,7 +1343,7 @@ fn setup_tutorials(
 
 fn animate(
     mut ui_animation_timer: ResMut<UiAnimationTimer>,
-    mut animations: Query<(&mut Animatable, Option<&mut UiTextureAtlasImage>)>,
+    mut animations: Query<(&mut Animatable, Option<&mut TextureAtlas>)>,
     time: Res<Time>,
 ) {
     ui_animation_timer.0.tick(time.delta());

@@ -19,6 +19,7 @@
                 border_color: None,
                 label: None,
             )),
+            asset_usage: RenderAssetUsages("RENDER_WORLD | MAIN_WORLD"), 
         ),
     ),
 )
