@@ -18,7 +18,7 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.13", features = ["wav", "wayland"] }
-bevy_rand = { version = "0.4.0", features = ["wyrand"] }
+bevy_rand = { version = "0.5", features = ["wyrand"] }
 devcaders = { version = "0.6.0" }
 rand = "0.8.5"
 
