@@ -50,7 +50,7 @@ fn main() {
     .init_state::<GameState>()
     .add_event::<CollisionEvent>()
     .add_systems(Startup, (spawn_core, spawn_asteroids))
-    .add_systems(Startup, (setup_fps_counter, setup_ui))
+    .add_systems(Startup, (setup_fps_counter, setup_ui).after(spawn_core))
     .add_systems(Startup, setup_tutorials)
     .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
     .add_systems(
@@ -136,7 +136,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             // This is kinda disgusting, make it a loop later TODO
             // Bottom left
             parent.spawn((
-                UiCameraConfig { show_ui: false },
                 Camera2dBundle {
                     transform: Transform::from_xyz(-1024.0, -1024.0, 0.0),
                     camera: Camera {
@@ -149,7 +148,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ));
             // Bottom middle
             parent.spawn((
-                UiCameraConfig { show_ui: false },
                 Camera2dBundle {
                     transform: Transform::from_xyz(0.0, -1024.0, 0.0),
                     camera: Camera {
@@ -162,7 +160,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ));
             // Bottom right
             parent.spawn((
-                UiCameraConfig { show_ui: false },
                 Camera2dBundle {
                     transform: Transform::from_xyz(1024.0, -1024.0, 0.0),
                     camera: Camera {
@@ -175,7 +172,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ));
             // Top left
             parent.spawn((
-                UiCameraConfig { show_ui: false },
                 Camera2dBundle {
                     transform: Transform::from_xyz(-1024.0, 1024.0, 0.0),
                     camera: Camera {
@@ -188,7 +184,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ));
             // Top middle
             parent.spawn((
-                UiCameraConfig { show_ui: false },
                 Camera2dBundle {
                     transform: Transform::from_xyz(0.0, 1024.0, 0.0),
                     camera: Camera {
@@ -201,7 +196,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ));
             // Top right
             parent.spawn((
-                UiCameraConfig { show_ui: false },
                 Camera2dBundle {
                     transform: Transform::from_xyz(1024.0, 1024.0, 0.0),
                     camera: Camera {
@@ -214,7 +208,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ));
             // Left
             parent.spawn((
-                UiCameraConfig { show_ui: false },
                 Camera2dBundle {
                     transform: Transform::from_xyz(-1024.0, 0.0, 0.0),
                     camera: Camera {
@@ -227,7 +220,6 @@ fn spawn_core(mut commands: Commands, assets: Res<AssetServer>) {
             ));
             // Right
             parent.spawn((
-                UiCameraConfig { show_ui: false },
                 Camera2dBundle {
                     transform: Transform::from_xyz(1024.0, 0.0, 0.0),
                     camera: Camera {
@@ -542,11 +534,13 @@ struct FpsRoot;
 #[derive(Component)]
 struct FpsText;
 
-fn setup_fps_counter(mut commands: Commands) {
+fn setup_fps_counter(mut commands: Commands, main_camera: Query<Entity, With<MainCamera>>) {
     // create our UI root node
     // this is the wrapper/container for the text
+    // TODO: single can panic
     let root = commands
         .spawn((
+            TargetCamera(main_camera.single()),
             FpsRoot,
             NodeBundle {
                 // give it a dark background for readability
@@ -649,7 +643,10 @@ fn fps_text_update_system(
 }
 
 /// Toggle the FPS counter when pressing F12
-fn fps_counter_showhide(mut q: Query<&mut Visibility, With<FpsRoot>>, kbd: Res<ButtonInput<KeyCode>>) {
+fn fps_counter_showhide(
+    mut q: Query<&mut Visibility, With<FpsRoot>>,
+    kbd: Res<ButtonInput<KeyCode>>,
+) {
     if kbd.just_pressed(KeyCode::F12) {
         let mut vis = q.single_mut();
         *vis = match *vis {
@@ -960,24 +957,28 @@ struct UiHealthBack;
 #[derive(Component)]
 struct UiHealthFront;
 
-fn setup_ui(mut commands: Commands) {
+fn setup_ui(mut commands: Commands, main_camera: Query<Entity, With<MainCamera>>) {
     // TODO: move fps to this root since i think you can only have one root. Maybe????
     // TODO: make it scale well
     // I think this will just be for player health/shield
+    // TODO: single will panic if its not single
     commands
-        .spawn(NodeBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(10.0),
-                height: Val::Px(50.0),
-                width: Val::Percent(100.0),
-                align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Column,
+        .spawn((
+            TargetCamera(main_camera.single()),
+            NodeBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(10.0),
+                    height: Val::Px(50.0),
+                    width: Val::Percent(100.0),
+                    align_items: AlignItems::Center,
+                    flex_direction: FlexDirection::Column,
 
+                    ..Default::default()
+                },
                 ..Default::default()
             },
-            ..Default::default()
-        })
+        ))
         .with_children(|parent| {
             // Health background
             parent
@@ -1142,9 +1143,9 @@ fn setup_tutorials(
                                     max_frame: 3,
                                 },
                                 AtlasImageBundle {
-                                    texture_atlas: TextureAtlas { 
-                                        layout: controls_atlas, 
-                                        index: 2
+                                    texture_atlas: TextureAtlas {
+                                        layout: controls_atlas,
+                                        index: 2,
                                     },
                                     image: UiImage {
                                         texture: texture_sheet,
@@ -1194,9 +1195,9 @@ fn setup_tutorials(
                                     max_frame: 1,
                                 },
                                 AtlasImageBundle {
-                                    texture_atlas: TextureAtlas { 
-                                        layout: controls_atlas, 
-                                        index: 5 
+                                    texture_atlas: TextureAtlas {
+                                        layout: controls_atlas,
+                                        index: 5,
                                     },
                                     image: UiImage {
                                         texture: texture_sheet,
@@ -1247,9 +1248,9 @@ fn setup_tutorials(
                                         max_frame: 1,
                                     },
                                     AtlasImageBundle {
-                                        texture_atlas: TextureAtlas { 
-                                            layout: controls_atlas, 
-                                            index: 9 
+                                        texture_atlas: TextureAtlas {
+                                            layout: controls_atlas,
+                                            index: 9,
                                         },
                                         image: UiImage {
                                             texture: texture_sheet,
@@ -1273,9 +1274,9 @@ fn setup_tutorials(
                                         max_frame: 1,
                                     },
                                     AtlasImageBundle {
-                                        texture_atlas: TextureAtlas { 
-                                            layout: controls_atlas, 
-                                            index: 9 
+                                        texture_atlas: TextureAtlas {
+                                            layout: controls_atlas,
+                                            index: 9,
                                         },
                                         image: UiImage {
                                             texture: texture_sheet,
@@ -1326,9 +1327,9 @@ fn setup_tutorials(
                                     max_frame: 3,
                                 },
                                 AtlasImageBundle {
-                                    texture_atlas: TextureAtlas { 
-                                        layout: controls_atlas, 
-                                        index: 0 
+                                    texture_atlas: TextureAtlas {
+                                        layout: controls_atlas,
+                                        index: 0,
                                     },
                                     image: UiImage {
                                         texture: texture_sheet,
