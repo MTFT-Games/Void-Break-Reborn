@@ -82,7 +82,7 @@ fn main() {
         (cull_bullets, break_asteroids, hurt_player).after(check_collisions),
     )
     .add_systems(Update, bevy::window::close_on_esc)
-    .add_systems(Update, toggle_pause.run_if(input_just_pressed(KeyCode::P)))
+    .add_systems(Update, toggle_pause.run_if(input_just_pressed(KeyCode::KeyP)))
     .add_systems(Update, draw_hitboxes.run_if(in_state(GameState::Paused)))
     .insert_resource(UiAnimationTimer(Timer::from_seconds(
         0.5,
@@ -298,25 +298,25 @@ fn player_controller(
 
     // Once a more configurable input system is set up,
     // TODO set devcade controls there instead of adding them to conditionals
-    let mut forward_control = keyboard.pressed(KeyCode::W);
+    let mut forward_control = keyboard.pressed(KeyCode::KeyW);
     if devcade.is_some() {
         forward_control = forward_control
             || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickUp)
             || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickUp);
     }
-    let mut back_control = keyboard.pressed(KeyCode::S);
+    let mut back_control = keyboard.pressed(KeyCode::KeyS);
     if devcade.is_some() {
         back_control = back_control
             || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickDown)
             || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickDown);
     }
-    let mut left_control = keyboard.pressed(KeyCode::A);
+    let mut left_control = keyboard.pressed(KeyCode::KeyA);
     if devcade.is_some() {
         left_control = left_control
             || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickLeft)
             || devcade_controls.pressed(devcaders::Player::P2, devcaders::Button::StickLeft);
     }
-    let mut right_control = keyboard.pressed(KeyCode::D);
+    let mut right_control = keyboard.pressed(KeyCode::KeyD);
     if devcade.is_some() {
         right_control = right_control
             || devcade_controls.pressed(devcaders::Player::P1, devcaders::Button::StickRight)
